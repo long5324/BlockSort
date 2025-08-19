@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class BlockControl : MonoBehaviour
 {
-    List<ChildBlock> ListChildBlock;
+    public List<ChildBlock> ListChildBlock { get; set; } = new List<ChildBlock>();
     public bool Tagert { get; set; }
+    public Vector2 PosionBlock { get; set; } = new Vector2();
 }
