@@ -6,22 +6,27 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEditorInternal;
 using UnityEngine;
+using UnityEngine.InputSystem.HID;
+using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UIElements;
 using static UnityEngine.GraphicsBuffer;
 
-public class GameManager : MonoBehaviour
+public class GameManager : Singleton<GameManager>
 {
     [SerializeField] List<GameObject> ListBlockGamePlay;
     [SerializeField] GameObject BottomBlockGameObject;
     [SerializeField] GameObject PrefabBlockChild;
-    List<BlockControl> BottomBlock = new List<BlockControl>();
+    [SerializeField] public float sizeYBlock { get; private set; } = 0.003f;
+    public  List<BlockControl> BottomBlock { get; set; } = new List<BlockControl>();
     Camera cam;
     GameObject selectedBlock;
+    AnimationControl animationControl;
     BlockMaterialControl blockMaterialControl;
     List<Vector3> ListDefaulPossitionBlockGamePlay = new List<Vector3>();
     public GameObject TagertBlock { get; set; }
     private void Start()
     {
+        animationControl = AnimationControl.Instance;
         blockMaterialControl = BlockMaterialControl.Instance;
         cam = Camera.main;
         foreach(var i in ListBlockGamePlay)
@@ -61,8 +66,8 @@ public class GameManager : MonoBehaviour
     void CheckFirt(BlockControl P)
     {
         List<BlockControl> ListCheck = new List<BlockControl>();
-        int countCanChange=0;
-        
+        int countCanChange = 0;
+
         foreach (var j in BottomBlock)
         {
             if (j.PosionBlock == P.PosionBlock + new Vector2(1, 1)
@@ -75,51 +80,42 @@ public class GameManager : MonoBehaviour
                 || j.PosionBlock == P.PosionBlock + new Vector2(-1, 1))
             {
                 ListCheck.Add(j);
-            }   
+            }
         }
         foreach (var k in ListCheck)
         {
-            if (k.ListChildBlock.Count == 0
-                || k.ListChildBlock[0].Material.name != P.ListChildBlock[0].Material.name)
-                continue;
-            countCanChange++;
+            if (k.ListChildBlock.Count > 0
+                && P.ListChildBlock.Count > 0
+                && k.ListChildBlock[0].Material.name == P.ListChildBlock[0].Material.name)
+            {
+                countCanChange++;
+            }
         }
-            foreach (var k in ListCheck)
+
+        foreach (var k in ListCheck)
         {
-            if (k.ListChildBlock.Count == 0
-                || k.ListChildBlock[0].Material.name != P.ListChildBlock[0].Material.name)
-                continue;
-
-            int CountChange = 0;
-            while (CountChange < k.ListChildBlock.Count &&
-                   k.ListChildBlock[CountChange].Material.name == P.ListChildBlock[0].Material.name)
+            if (countCanChange > 1)
+                Sortspecifically(k, P);
+            else if(countCanChange ==1) Sortspecifically(P, k);
+        }
+        countCanChange = 0;
+        foreach (var k in ListCheck)
+        {
+            if (k.ListChildBlock.Count > 0
+                && P.ListChildBlock.Count > 0
+                && k.ListChildBlock[0].Material.name == P.ListChildBlock[0].Material.name)
             {
-                CountChange++;
-            }
-
-            List<Transform> childrenToMove = new List<Transform>();
-            for (int z = 0; z < CountChange; z++)
-            {
-                childrenToMove.Add(k.transform.GetChild(z));
-            }
-
-
-            foreach (var child in childrenToMove)
-            {
-                child.SetParent(P.transform);
-                child.localPosition = new Vector3(0, 0.003f * P.transform.childCount, 0);
-                child.localScale = Vector3.one;
-            }
-
-
-            for (int z = 0; z < CountChange; z++)
-            {
-                P.ListChildBlock.Insert(0, k.ListChildBlock[0]);
-                k.ListChildBlock.RemoveAt(0);
+                countCanChange++;
             }
         }
+        if(countCanChange > 0)
+        {
+            CheckFirt( P);
+        }
+        SortAll();
+        //CheckScore();
     }
-    void Sort()
+    public void SortAll()
     {
         bool check = false;
         for (int i = 0; i < BottomBlock.Count; i++)
@@ -127,7 +123,6 @@ public class GameManager : MonoBehaviour
             if (BottomBlock[i].ListChildBlock.Count == 0) continue;
 
             List<BlockControl> ListCheck = new List<BlockControl>();
-
             // Tìm các block lân cận
             foreach (var j in BottomBlock)
             {
@@ -145,45 +140,41 @@ public class GameManager : MonoBehaviour
             }
             foreach (var k in ListCheck)
             {
-                if (k.ListChildBlock.Count == 0
+                if (k.ListChildBlock.Count == 0 || BottomBlock[i].transform.childCount ==0
                     || k.ListChildBlock[0].Material.name != BottomBlock[i].ListChildBlock[0].Material.name)
                     continue;
-                check = true;
-                int CountChange = 0;
-                while (CountChange < k.ListChildBlock.Count &&
-                       k.ListChildBlock[CountChange].Material.name == BottomBlock[i].ListChildBlock[0].Material.name)
-                {
-                    CountChange++;
-                }
-
-                List<Transform> childrenToMove = new List<Transform>();
-                for (int z = 0; z < CountChange; z++)
-                {
-                    childrenToMove.Add(k.transform.GetChild(z));
-                }
-
-               
-                foreach (var child in childrenToMove)
-                {
-                    child.SetParent(BottomBlock[i].transform);
-                     child.localPosition = new Vector3(0, 0.003f * BottomBlock[i].transform.childCount, 0);
-                     child.localScale = Vector3.one;
-                }
-
-               
-                for (int z = 0; z < CountChange; z++)
-                {
-                    BottomBlock[i].ListChildBlock.Insert(0, k.ListChildBlock[0]);
-                    k.ListChildBlock.RemoveAt(0);
-                }
+                Sortspecifically(BottomBlock[i],k);
             }
         }
         if (check)
         {
-            Sort();
+            SortAll();
         }
+        //CheckScore();
     }
+    void Sortspecifically(BlockControl start , BlockControl end)
+    {
+        int countChange = 0;
 
+        if (end.ListChildBlock.Count > 0) 
+        {
+            while (countChange < start.ListChildBlock.Count
+                   && start.ListChildBlock[countChange].Material.name == end.ListChildBlock[0].Material.name)
+            {
+                countChange++;
+            }
+        }
+        if(countChange > 0) 
+        animationControl.AddAni(start, end, countChange);
+        
+
+        for (int z = 0; z < countChange; z++)
+        {
+            end.ListChildBlock.Insert(0, end.ListChildBlock[0]);
+            start.ListChildBlock.RemoveAt(0);
+        }
+        
+    }
     void TagertBlockPlay() {
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
@@ -226,7 +217,7 @@ public class GameManager : MonoBehaviour
                         }
                     }
                 }
-                targetPos.y = downHit.point.y + 1f;
+                targetPos.y = downHit.point.y + 2f;
             }
             else
             {
@@ -262,8 +253,9 @@ public class GameManager : MonoBehaviour
         {
             Transform child = Start.transform.GetChild(i);
             child.SetParent(End.transform);
-            child.localPosition = new Vector3(0, 0.003f * (countChange+1- End.transform.childCount), 0);
+            child.localPosition = new Vector3(0, sizeYBlock * (countChange+1- End.transform.childCount), 0);
             child.localScale = Vector3.one;
+            child.localRotation = Quaternion.identity;
             End.ListChildBlock.Add(Start.ListChildBlock[i]);
         }
         Start.ListChildBlock.Clear();
@@ -312,9 +304,9 @@ public class GameManager : MonoBehaviour
                 BlockE = BlockE - cureenBlock;
                 for (int k = 1; k <= cureenBlock; k++)
                 {
-                    GameObject ChildGameObject = Instantiate(PrefabBlockChild, i.transform.position + new Vector3(0, 0.003f * (j + 1), 0), Quaternion.identity);
+                    GameObject ChildGameObject = Instantiate(PrefabBlockChild, i.transform.position + new Vector3(0, sizeYBlock * (j + 1), 0), Quaternion.identity);
                     ChildGameObject.transform.SetParent(i.transform);
-                    ChildGameObject.transform.localPosition = new Vector3(0, 0.003f * i.transform.childCount, 0);
+                    ChildGameObject.transform.localPosition = new Vector3(0, sizeYBlock * i.transform.childCount, 0);
                     ChildGameObject.transform.localScale = new Vector3(1, 1, 1);
                     ChildGameObject.GetComponent<Renderer>().material = blockMaterialControl.MaterialList[ColorBlock[j - 1]];
                     ChildBlock Child = new ChildBlock();
@@ -325,6 +317,18 @@ public class GameManager : MonoBehaviour
             }
         }
     }
-
+    public int CheckScore(BlockControl Count)
+    {
+           int countScore = 1;
+           if (Count.transform.childCount < 12) return countScore;
+            
+            string nameMaterial = Count.ListChildBlock[0].Material.name;
+            while (countScore < Count.ListChildBlock.Count && nameMaterial == Count.ListChildBlock[countScore].Material.name)
+            {
+                countScore++;
+               
+            }
+        return countScore;
+    }
 
 }
