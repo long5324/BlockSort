@@ -1,10 +1,9 @@
-﻿using NUnit;
+﻿using DG.Tweening.Core.Easing;
+using NUnit;
 using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
-using Unity.VisualScripting;
-using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.InputSystem.HID;
 using UnityEngine.SocialPlatforms.Impl;
@@ -16,16 +15,24 @@ public class GameManager : Singleton<GameManager>
     [SerializeField] List<GameObject> ListBlockGamePlay;
     [SerializeField] GameObject BottomBlockGameObject;
     [SerializeField] GameObject PrefabBlockChild;
-    [SerializeField] public float sizeYBlock { get; private set; } = 0.003f;
+    [SerializeField] public float sizeYBlock { get;  set; } = 0.003f;
+    [SerializeField] public float MunberBlock = 11;
     public  List<BlockControl> BottomBlock { get; set; } = new List<BlockControl>();
     Camera cam;
     GameObject selectedBlock;
     AnimationControl animationControl;
     BlockMaterialControl blockMaterialControl;
+    UIManager uiManager { get; set; }
     List<Vector3> ListDefaulPossitionBlockGamePlay = new List<Vector3>();
     public GameObject TagertBlock { get; set; }
+    public int CountScaleScore { get; set; } = 0;
+    public bool StartScaleScore { get; set; } = false;
+    public int CurrenScore { get; set; } = 0;
+    public int ScorePluss { get; set; } = 0;
+    bool pause = false;
     private void Start()
     {
+        uiManager = UIManager.Instance;
         animationControl = AnimationControl.Instance;
         blockMaterialControl = BlockMaterialControl.Instance;
         cam = Camera.main;
@@ -42,13 +49,14 @@ public class GameManager : Singleton<GameManager>
             }
 
         }
+        uiManager.SetMaxScore(LoadScore());
         RandomSpawnBlockChild();
     }
     
 
     private void LateUpdate()
     {
-     
+        if (pause) return;
         if (Input.GetMouseButtonDown(0))
         {
             TagertBlockPlay();
@@ -60,10 +68,14 @@ public class GameManager : Singleton<GameManager>
         if (Input.GetMouseButtonUp(0))
         {
             EndClicK();
-           
+        }
+        if (CheckLose() && animationControl.ListAni.Count ==0)
+        {
+                uiManager.Losegame();
+               
         }
     }
-    void CheckFirt(BlockControl P)
+    public void CheckFirt(BlockControl P)
     {
         List<BlockControl> ListCheck = new List<BlockControl>();
         int countCanChange = 0;
@@ -113,7 +125,10 @@ public class GameManager : Singleton<GameManager>
             CheckFirt( P);
         }
         SortAll();
-        //CheckScore();
+    }
+    public void setPause(bool b)
+    {
+        pause = b;
     }
     public void SortAll()
     {
@@ -140,9 +155,11 @@ public class GameManager : Singleton<GameManager>
             }
             foreach (var k in ListCheck)
             {
-                if (k.ListChildBlock.Count == 0 || BottomBlock[i].transform.childCount ==0
-                    || k.ListChildBlock[0].Material.name != BottomBlock[i].ListChildBlock[0].Material.name)
-                    continue;
+                if (k.ListChildBlock.Count == 0) continue;
+                if (BottomBlock[i].transform.childCount == 0) continue;
+                if (BottomBlock[i].ListChildBlock.Count == 0) continue; 
+                if (k.ListChildBlock[0].Material.name != BottomBlock[i].ListChildBlock[0].Material.name) continue;
+
                 Sortspecifically(BottomBlock[i],k);
             }
         }
@@ -150,7 +167,6 @@ public class GameManager : Singleton<GameManager>
         {
             SortAll();
         }
-        //CheckScore();
     }
     void Sortspecifically(BlockControl start , BlockControl end)
     {
@@ -217,7 +233,7 @@ public class GameManager : Singleton<GameManager>
                         }
                     }
                 }
-                targetPos.y = downHit.point.y + 2f;
+                targetPos.y = downHit.point.y + 1f;
             }
             else
             {
@@ -313,22 +329,67 @@ public class GameManager : Singleton<GameManager>
                     Child.Material = ChildGameObject.gameObject.GetComponent<Renderer>().material;
                     i.GetComponent<BlockControl>().ListChildBlock.Add(Child);
                 }
-
             }
         }
     }
     public int CheckScore(BlockControl Count)
     {
-           int countScore = 1;
-           if (Count.transform.childCount < 12) return countScore;
-            
-            string nameMaterial = Count.ListChildBlock[0].Material.name;
-            while (countScore < Count.ListChildBlock.Count && nameMaterial == Count.ListChildBlock[countScore].Material.name)
-            {
-                countScore++;
-               
-            }
+        int countScore = 1;
+        if (Count == null || Count.ListChildBlock == null || Count.ListChildBlock.Count == 0)
+            return 0;
+
+        if (Count.transform.childCount < MunberBlock)
+            return countScore;
+        string nameMaterial = Count.ListChildBlock[0].Material != null
+            ? Count.ListChildBlock[0].Material.name
+            : string.Empty;
+        while (countScore < Count.ListChildBlock.Count)
+        {
+            var block = Count.ListChildBlock[countScore];
+            if (block == null || block.Material == null) break;
+
+            if (block.Material.name != nameMaterial) break;
+
+            countScore++;
+        }
+
         return countScore;
     }
+    private void OnApplicationQuit()
+    {
+        SaveScore(CurrenScore);
+    }
 
+    public void UpdateScore()
+    {
+        int scalse = (CountScaleScore / 5)+1;
+        CurrenScore  += scalse * ScorePluss;
+        uiManager.SetScore(CurrenScore);
+        CountScaleScore = 0;
+        ScorePluss = 0;
+    }
+    public void SaveScore(int score)
+    {
+        int lastScore = LoadScore();
+        if (score > lastScore)
+        {
+            PlayerPrefs.SetInt("HighScore", score);
+            PlayerPrefs.Save();
+        }
+    }
+
+    public int LoadScore()
+    {
+        return PlayerPrefs.GetInt("HighScore", 0); 
+    }
+    public bool CheckLose()
+    {
+        foreach(var i in BottomBlock)
+        {
+            if(i.ListChildBlock.Count==0){
+             return false;
+            }
+        }
+        return true;    
+    }
 }

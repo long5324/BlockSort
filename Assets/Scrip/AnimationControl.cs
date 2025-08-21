@@ -35,11 +35,12 @@ public class AnimationControl : Singleton<AnimationControl>
         if (ListAni.Count == 0 && !IsRun && !ScorePlus) {
             foreach (var i in gameManager.BottomBlock)
             {
-                if (i.ListChildBlock.Count<12||gameManager.CheckScore(i) < 12) continue;
+                if (i.ListChildBlock.Count<gameManager.MunberBlock||gameManager.CheckScore(i) < gameManager.MunberBlock) continue;
+                Debug.Log(gameManager.CheckScore(i));
+                    gameManager.ScorePluss += gameManager.CheckScore(i);
                     StartCoroutine(animation.PlusScore(i, gameManager.CheckScore(i), 0));
-                    ScorePlus = true;
+                    ScorePlus = true;  
             }
-           
         }
     }
     public void AddAni(BlockControl Start , BlockControl End , int countBlock)
