@@ -39,7 +39,7 @@ public class AnimationControl : Singleton<AnimationControl>
         else delaysort = false; 
         if (ListAni.Count > 0 && !IsRun && !ScorePlus && !delaysort)
         {
-            HandleAnimations();
+           StartCoroutine(DelaySort());
         }
         else if (ListAni.Count == 0 && !IsRun && !ScorePlus)
         {
@@ -47,7 +47,11 @@ public class AnimationControl : Singleton<AnimationControl>
         }
 
     }
- 
+    IEnumerator DelaySort()
+    {
+        yield return new WaitForSeconds(0.1f);
+        HandleAnimations();
+    }
     private void HandleAnimations()
     {
         var firstAnimation = ListAni[0];

@@ -154,23 +154,32 @@ public class GameManager : Singleton<GameManager>
     }
     public void CheckBlock()
     {
-        foreach (var i in BottomBlock)
+        // Duyệt qua tất cả các phần tử con của BottomBlockGameObject
+        for (int i = 0; i < BottomBlockGameObject.transform.childCount; i++)
         {
-            // Kiểm tra nếu số lượng ListChildBlock lớn hơn số lượng child
-            if (i.ListChildBlock.Count > i.transform.childCount)
-            {
-                i.ListChildBlock.Clear(); // Xóa ListChildBlock nếu cần thiết
-            }
+            // Lấy đối tượng con và BlockControl một lần duy nhất
+            Transform childTransform = BottomBlockGameObject.transform.GetChild(i);
+            BlockControl bt = childTransform.GetComponent<BlockControl>();
 
-            // Vòng lặp qua tất cả các đối tượng con trong transform của block
-            for (int j = 0; j < i.transform.childCount; j++)
+            // Xóa ListChildBlock của BlockControl
+            bt.ListChildBlock.Clear();
+
+            // Duyệt qua tất cả các đối tượng con của BlockControl
+            for (int j = 0; j < childTransform.childCount; j++)
             {
-                ChildBlock cl = new ChildBlock();
-                cl.Material = i.transform.GetChild(j).GetComponent<Renderer>().material;
-                i.ListChildBlock.Add(cl);
+                // Lấy đối tượng con của BlockControl và tạo một ChildBlock mới
+                Transform childBlockTransform = childTransform.GetChild(j);
+                ChildBlock child = new ChildBlock();
+
+                // Lấy material từ Renderer của childBlockTransform và lưu vào child
+                child.Material = childBlockTransform.GetComponent<Renderer>().material;
+
+                // Thêm ChildBlock vào ListChildBlock của BlockControl
+                bt.ListChildBlock.Add(child);
             }
         }
     }
+
 
     public void setPause(bool b)
     {
@@ -311,6 +320,7 @@ public class GameManager : Singleton<GameManager>
     }
     void ChangeChildBlock(BlockControl Start, BlockControl End)
     {
+       
         int countChange = Start.transform.childCount;
         for (int i = countChange - 1; i >= 0; i--)
         {
@@ -326,7 +336,7 @@ public class GameManager : Singleton<GameManager>
     void SetBlock()
     {
         if (selectedBlock == null || TagertBlock == null) return;
-
+        
         ChangeChildBlock(
             selectedBlock.GetComponent<BlockControl>(),
             TagertBlock.GetComponent<BlockControl>()
@@ -345,6 +355,7 @@ public class GameManager : Singleton<GameManager>
             }
             RandomSpawnBlockChild();
         }
+ 
     }
     void SetStartBlockPlay()
     {

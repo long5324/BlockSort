@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 
 public class Animation : Singleton<Animation>
 {
-    [SerializeField] public float TimeUpBlock { get; private set; } = 0.07f;
+    [SerializeField] public float TimeUpBlock { get; private set; } = 0.05f;
     [SerializeField] public float TimeMoveBlock { get; private set; } = 0.05f;
     [SerializeField] public float TimeDownBlock { get; private set; } = 0.05f;
 
@@ -226,7 +226,7 @@ public class Animation : Singleton<Animation>
                             });
                     });
             });
-       
+        gameManager.CheckBlock();
         gameManager.SortAll();
         control.ScorePlus = false;
         control.IsRun = false;
