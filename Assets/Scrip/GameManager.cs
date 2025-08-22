@@ -1,9 +1,10 @@
 ﻿using DG.Tweening.Core.Easing;
+
 using NUnit;
 using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
+
 using UnityEngine;
 using UnityEngine.InputSystem.HID;
 using UnityEngine.SocialPlatforms.Impl;
@@ -12,17 +13,18 @@ using static UnityEngine.GraphicsBuffer;
 
 public class GameManager : Singleton<GameManager>
 {
-    [SerializeField] List<GameObject> ListBlockGamePlay;
+    public List<GameObject> ListBlockGamePlay;
     [SerializeField] GameObject BottomBlockGameObject;
     [SerializeField] GameObject PrefabBlockChild;
     [SerializeField] public float sizeYBlock { get;  set; } = 0.003f;
     [SerializeField] public float MunberBlock = 11;
+
     public  List<BlockControl> BottomBlock { get; set; } = new List<BlockControl>();
     Camera cam;
     GameObject selectedBlock;
     AnimationControl animationControl;
     BlockMaterialControl blockMaterialControl;
-    UIManager uiManager { get; set; }
+    UIManager uiManager;
     List<Vector3> ListDefaulPossitionBlockGamePlay = new List<Vector3>();
     public GameObject TagertBlock { get; set; }
     public int CountScaleScore { get; set; } = 0;
@@ -30,8 +32,13 @@ public class GameManager : Singleton<GameManager>
     public int CurrenScore { get; set; } = 0;
     public int ScorePluss { get; set; } = 0;
     bool pause = false;
+    private Vector3 baseScale = new Vector3(0.9f, 0.9f, 0.9f);
+    private float referenceWidth = 1080f;
+    private float referenceHeight = 2280f;
     private void Start()
     {
+        Application.targetFrameRate = 60;
+        AdjustScaleToScreen();
         uiManager = UIManager.Instance;
         animationControl = AnimationControl.Instance;
         blockMaterialControl = BlockMaterialControl.Instance;
@@ -49,12 +56,15 @@ public class GameManager : Singleton<GameManager>
             }
 
         }
+
         uiManager.SetMaxScore(LoadScore());
         RandomSpawnBlockChild();
+        setPause(true);
+        setActiveListGamePlay(false);
+        SetStartBlockPlay();
     }
-    
 
-    private void LateUpdate()
+    private void Update()
     {
         if (pause) return;
         if (Input.GetMouseButtonDown(0))
@@ -71,8 +81,24 @@ public class GameManager : Singleton<GameManager>
         }
         if (CheckLose() && animationControl.ListAni.Count ==0)
         {
-                uiManager.Losegame();
+            SaveScore(CurrenScore);
+            uiManager.Losegame();
                
+        }
+    }
+    void AdjustScaleToScreen()
+    {
+        float currentWidth = Screen.width;
+        float currentHeight = Screen.height;
+        float widthRatio = currentWidth / referenceWidth;
+        float heightRatio = currentHeight / referenceHeight;
+        float scaleRatio = Mathf.Min(widthRatio, heightRatio);
+        transform.localScale = baseScale * scaleRatio;
+    }
+    public void setActiveListGamePlay(bool b)
+    {
+        foreach (var i in ListBlockGamePlay) { 
+            i.SetActive(b);
         }
     }
     public void CheckFirt(BlockControl P)
@@ -124,8 +150,28 @@ public class GameManager : Singleton<GameManager>
         {
             CheckFirt( P);
         }
-        SortAll();
+       
     }
+    public void CheckBlock()
+    {
+        foreach (var i in BottomBlock)
+        {
+            // Kiểm tra nếu số lượng ListChildBlock lớn hơn số lượng child
+            if (i.ListChildBlock.Count > i.transform.childCount)
+            {
+                i.ListChildBlock.Clear(); // Xóa ListChildBlock nếu cần thiết
+            }
+
+            // Vòng lặp qua tất cả các đối tượng con trong transform của block
+            for (int j = 0; j < i.transform.childCount; j++)
+            {
+                ChildBlock cl = new ChildBlock();
+                cl.Material = i.transform.GetChild(j).GetComponent<Renderer>().material;
+                i.ListChildBlock.Add(cl);
+            }
+        }
+    }
+
     public void setPause(bool b)
     {
         pause = b;
@@ -138,7 +184,6 @@ public class GameManager : Singleton<GameManager>
             if (BottomBlock[i].ListChildBlock.Count == 0) continue;
 
             List<BlockControl> ListCheck = new List<BlockControl>();
-            // Tìm các block lân cận
             foreach (var j in BottomBlock)
             {
                 if (j.PosionBlock == BottomBlock[i].PosionBlock + new Vector2(1, 1)
@@ -167,6 +212,7 @@ public class GameManager : Singleton<GameManager>
         {
             SortAll();
         }
+       
     }
     void Sortspecifically(BlockControl start , BlockControl end)
     {
@@ -181,6 +227,7 @@ public class GameManager : Singleton<GameManager>
             }
         }
         if(countChange > 0) 
+
         animationControl.AddAni(start, end, countChange);
         
 
@@ -299,6 +346,17 @@ public class GameManager : Singleton<GameManager>
             RandomSpawnBlockChild();
         }
     }
+    void SetStartBlockPlay()
+    {
+        foreach (var i in ListBlockGamePlay)
+        {
+            for (int j = 0; j < i.transform.childCount; j++)
+            {
+                Vector3 pos = i.transform.GetChild(j).transform.position;
+                i.transform.GetChild(j).transform.position = new Vector3(pos.x, pos.y + 4, pos.z);
+            }
+        }
+    }
 
     void RandomSpawnBlockChild()
     {
@@ -359,7 +417,7 @@ public class GameManager : Singleton<GameManager>
     {
         SaveScore(CurrenScore);
     }
-
+    
     public void UpdateScore()
     {
         int scalse = (CountScaleScore / 5)+1;

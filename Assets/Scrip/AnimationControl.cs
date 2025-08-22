@@ -1,11 +1,8 @@
-using DG.Tweening.Core.Easing;
-using DG.Tweening;
+﻿using DG.Tweening;
 using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq.Expressions;
-using UnityEngine.UIElements;
 
 public class AnimationControl : Singleton<AnimationControl>
 {
@@ -16,39 +13,87 @@ public class AnimationControl : Singleton<AnimationControl>
         public BlockControl BlockEnd;
         public int CountBlock;
     }
-    public bool ScorePlus { get; set; } = false;
-    Animation animation;
-    GameManager gameManager;
+    private float lastTweenTime = -1f;
+    public bool ScorePlus { get;  set; } = false;  
+    private Animation animation;
+    private GameManager gameManager;
+    private UIManager uiManager;
+    bool delaysort = false;
+    public bool IsRun { get;  set; } = false;  
+    public List<IfAnimation> ListAni { get; private set; } = new List<IfAnimation>();
+
     private void Start()
     {
         gameManager = GameManager.Instance;
         animation = Animation.Instance;
+        uiManager = UIManager.Instance;
+        animation.AniStartButton(uiManager.getStartButton());
     }
-    public bool IsRun { get; set; } = false;
-    public List<IfAnimation> ListAni = new List<IfAnimation>();
-    private void LateUpdate()
+
+    private void Update()
     {
-        if (ListAni.Count > 0 && !IsRun && !ScorePlus) {
-            animation.ChangeBlock(ListAni[0].BlockStart, ListAni[0].BlockEnd, ListAni[0].CountBlock);
+        if (ScorePlus)
+        {
+            delaysort = true;
+        }
+        else delaysort = false; 
+        if (ListAni.Count > 0 && !IsRun && !ScorePlus && !delaysort)
+        {
+            HandleAnimations();
+        }
+        else if (ListAni.Count == 0 && !IsRun && !ScorePlus)
+        {
+            HandleScore();
+        }
+
+    }
+ 
+    private void HandleAnimations()
+    {
+        var firstAnimation = ListAni[0];
+
+        if (firstAnimation != null && firstAnimation.BlockStart != null && firstAnimation.BlockEnd != null)
+        {
+            animation.ChangeBlock(firstAnimation.BlockStart, firstAnimation.BlockEnd, firstAnimation.CountBlock);
             IsRun = true;
         }
-        if (ListAni.Count == 0 && !IsRun && !ScorePlus) {
-            foreach (var i in gameManager.BottomBlock)
+    }
+
+    private void HandleScore()
+    {
+        // Đảm bảo BottomBlock không phải là null và có ít nhất một phần tử
+        if (gameManager.BottomBlock == null || gameManager.BottomBlock.Count == 0) return;
+
+        foreach (var block in gameManager.BottomBlock)
+        {
+            if (block.ListChildBlock.Count < gameManager.MunberBlock || gameManager.CheckScore(block) < gameManager.MunberBlock)
+                continue;
+
+            int score = gameManager.CheckScore(block);
+            if (score > 0)
             {
-                if (i.ListChildBlock.Count<gameManager.MunberBlock||gameManager.CheckScore(i) < gameManager.MunberBlock) continue;
-                Debug.Log(gameManager.CheckScore(i));
-                    gameManager.ScorePluss += gameManager.CheckScore(i);
-                    StartCoroutine(animation.PlusScore(i, gameManager.CheckScore(i), 0));
-                    ScorePlus = true;  
+                gameManager.ScorePluss += score;
+                StartCoroutine(animation.PlusScore(block, score, 0));
+                ScorePlus = true;
             }
+           
         }
     }
-    public void AddAni(BlockControl Start , BlockControl End , int countBlock)
+
+    public void AddAni(BlockControl Start, BlockControl End, int countBlock)
     {
-        IfAnimation N = new IfAnimation();
-        N .BlockStart = Start;
-        N .BlockEnd = End; 
-        N .CountBlock = countBlock;
-        ListAni.Add(N);
+        if (Start == null || End == null)
+        {
+            return;
+        }
+
+        IfAnimation newAnimation = new IfAnimation
+        {
+            BlockStart = Start,
+            BlockEnd = End,
+            CountBlock = countBlock
+        };
+
+        ListAni.Add(newAnimation);
     }
 }

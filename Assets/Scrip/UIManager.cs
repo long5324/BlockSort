@@ -7,15 +7,21 @@ using UnityEngine.UI;
 
 public class UIManager : Singleton<UIManager>
 {
-    [SerializeField]  TextMeshProUGUI CurrenScore;
+    [Header("text")]
+    [SerializeField] TextMeshProUGUI CurrenScore;
     [SerializeField] TextMeshProUGUI MaxScore;
-    [SerializeField] Slider ValueScore;
     [SerializeField] TextMeshProUGUI TextScale;
+    [Header("Slider")]
+    [SerializeField] Slider ValueScore;
+    [Header("CanvaGroup")]
     [SerializeField] CanvasGroup LoseGame;
+    [SerializeField] CanvasGroup StartButton;
+    [SerializeField] CanvasGroup PauseButton;
     GameManager gameManager;
     private void Start()
     {
         gameManager = GameManager.Instance;
+        SetShowUI(PauseButton);
     }
     public void SetScore(int score)
     {
@@ -73,7 +79,10 @@ public class UIManager : Singleton<UIManager>
     {
         gameManager.setPause(false);
     }
-
+    public RectTransform getStartButton()
+    {
+       return StartButton.GetComponent<RectTransform>();
+    }
     public void QuitGame()
     {
 

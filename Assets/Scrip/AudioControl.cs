@@ -3,22 +3,24 @@ using UnityEngine;
 public class AudioControl : Singleton<AudioControl>
 {
     public AudioSource Control;
-    public AudioClip SoundUp;
-    public AudioClip SoundDown;
-    public AudioClip SoundMove;
+    public Audio ListAudio;
     public void StartUp()
     {
-        if (Control == null || SoundUp == null) return;
-        Control.PlayOneShot(SoundUp);
+        AudioClip Audio = ListAudio.GetSound("up");
+        if (Control == null || Audio == null) return;
+        Control.PlayOneShot(Audio);
     }
     public void StartDown()
     {
-        if (Control == null || SoundDown == null) return;
-        Control.PlayOneShot(SoundDown);
+        AudioClip Audio = ListAudio.GetSound("down");
+        if (Control == null || Audio == null) return;
+        Control.PlayOneShot(Audio);
     }
     public void StartMove()
     {
-        if (Control == null || SoundMove == null) return;
-        Control.PlayOneShot(SoundMove);
+        AudioClip Audio = ListAudio.GetSound("move");
+        if (Control == null || Audio == null) return;
+        Control.PlayOneShot(Audio);
     }
+    
 }
