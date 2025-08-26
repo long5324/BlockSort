@@ -9,6 +9,7 @@ public class Audio : ScriptableObject
     {
         public string name;
         public AudioClip Sound;
+
     }
     public List<SoundInfo> ListSound;
     public AudioClip GetSound(string name)

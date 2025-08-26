@@ -13,10 +13,9 @@ public class AnimationControl : Singleton<AnimationControl>
         public BlockControl BlockEnd;
         public int CountBlock;
     }
-    private float lastTweenTime = -1f;
     public bool ScorePlus { get;  set; } = false;  
     private Animation animation;
-    private GameManager gameManager;
+    private GamePlayManager gamePlayManager;
     private UIManager uiManager;
     bool delaysort = false;
     public bool IsRun { get;  set; } = false;  
@@ -24,12 +23,11 @@ public class AnimationControl : Singleton<AnimationControl>
 
     private void Start()
     {
-        gameManager = GameManager.Instance;
+        gamePlayManager = GamePlayManager.Instance;
         animation = Animation.Instance;
         uiManager = UIManager.Instance;
         animation.AniStartButton(uiManager.getStartButton());
     }
-
     private void Update()
     {
         if (ScorePlus)
@@ -43,7 +41,7 @@ public class AnimationControl : Singleton<AnimationControl>
         }
         else if (ListAni.Count == 0 && !IsRun && !ScorePlus)
         {
-            HandleScore();
+            //HandleScore();
         }
 
     }
@@ -62,28 +60,26 @@ public class AnimationControl : Singleton<AnimationControl>
             IsRun = true;
         }
     }
-
-    private void HandleScore()
+  /*  private void HandleScore()
     {
         // Đảm bảo BottomBlock không phải là null và có ít nhất một phần tử
-        if (gameManager.BottomBlock == null || gameManager.BottomBlock.Count == 0) return;
+        if (gamePlayManager.BottomBlock == null || gamePlayManager.BottomBlock.Count == 0) return;
 
-        foreach (var block in gameManager.BottomBlock)
+        foreach (var block in gamePlayManager.BottomBlock)
         {
-            if (block.ListChildBlock.Count < gameManager.MunberBlock || gameManager.CheckScore(block) < gameManager.MunberBlock)
+            if (block.ListChildBlock.Count < gamePlayManager.MunberBlock || gamePlayManager.CheckScore(block) < gamePlayManager.MunberBlock)
                 continue;
 
-            int score = gameManager.CheckScore(block);
+            int score = gamePlayManager.CheckScore(block);
             if (score > 0)
             {
-                gameManager.ScorePluss += score;
+                gamePlayManager.ScorePluss += score;
                 StartCoroutine(animation.PlusScore(block, score, 0));
                 ScorePlus = true;
             }
            
         }
-    }
-
+    }*/
     public void AddAni(BlockControl Start, BlockControl End, int countBlock)
     {
         if (Start == null || End == null)

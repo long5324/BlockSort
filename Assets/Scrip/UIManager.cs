@@ -17,10 +17,10 @@ public class UIManager : Singleton<UIManager>
     [SerializeField] CanvasGroup LoseGame;
     [SerializeField] CanvasGroup StartButton;
     [SerializeField] CanvasGroup PauseButton;
-    GameManager gameManager;
+    GamePlayManager gamePlayManager;
     private void Start()
     {
-        gameManager = GameManager.Instance;
+        gamePlayManager = GamePlayManager.Instance;
         SetShowUI(PauseButton);
     }
     public void SetScore(int score)
@@ -72,12 +72,12 @@ public class UIManager : Singleton<UIManager>
     }
     public void Pause()
     {
-        gameManager.setPause(true);
+        gamePlayManager.setPause(true);
     }
 
     public void Resume()
     {
-        gameManager.setPause(false);
+        gamePlayManager.setPause(false);
     }
     public RectTransform getStartButton()
     {

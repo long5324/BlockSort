@@ -7,4 +7,13 @@ public class BlockControl : MonoBehaviour
     public List<ChildBlock> ListChildBlock { get; set; } = new List<ChildBlock>();
     public bool Tagert { get; set; }
     public Vector2 PosionBlock { get; set; } = new Vector2();
+    public Renderer Renderer { get; set; }
+    private void Start()
+    {
+        Renderer = GetComponent<Renderer>();
+    }
+    public void SetColor(Material material)
+    {
+        Renderer.material = material;
+    }
 }

@@ -14,14 +14,14 @@ public class Animation : Singleton<Animation>
 
     private AudioControl audioControl;
     private AnimationControl control;
-    private GameManager gameManager;
+    private GamePlayManager gamePlayManager;
     private UIManager uiManager;
 
     private void Start()
     {
         audioControl = AudioControl.Instance;
         control = AnimationControl.Instance;
-        gameManager = GameManager.Instance;
+        gamePlayManager = GamePlayManager.Instance;
         uiManager = UIManager.Instance;
     }
 
@@ -30,16 +30,16 @@ public class Animation : Singleton<Animation>
         List<Transform> listBlockChange = new List<Transform>();
         for (int i = 0; i < countBlock; i++)
         {
-            if (start.transform.GetChild(i) == null) continue;
+            if (start.transform.childCount > i && start.transform.GetChild(i) == null) continue;
             listBlockChange.Add(start.transform.GetChild(i));
         }
 
-        UpBlock(listBlockChange, end.transform.childCount * gameManager.sizeYBlock + 0.006f, 0.005f, end);
+        UpBlock(listBlockChange, end.transform.childCount * gamePlayManager.sizeYBlock + 0.006f, 0.005f, end);
     }
     
     public void StartAni()
     {
-        foreach (var block in gameManager.ListBlockGamePlay)
+        foreach (var block in gamePlayManager.ListBlockGamePlay)
         {
             for (int j = 0; j < block.transform.childCount; j++)
             {
@@ -62,7 +62,7 @@ public class Animation : Singleton<Animation>
 
     private IEnumerator MoveBlocksSequential(List<Transform> tf, float heightUp, float distanceBlock, BlockControl blockEnd)
     {
-        for (int i = 0; i < tf.Count; i++)
+        for (int i =0 ; i < tf.Count ; i++)
         {
             Vector3 pos = tf[i].localPosition;
             audioControl.StartUp();
@@ -82,7 +82,7 @@ public class Animation : Singleton<Animation>
     {
         yield return new WaitForSeconds(timeWait);
 
-        float heightLast = blockEnd.transform.childCount * gameManager.sizeYBlock;
+        float heightLast = blockEnd.transform.childCount * gamePlayManager.sizeYBlock;
        
 
         yield return StartCoroutine(MoveChildBlock(tf, blockEnd, 0.05f, heightLast));
@@ -115,7 +115,7 @@ public class Animation : Singleton<Animation>
 
         for (int i = tf.Count - 1; i >= 0; i--)
         {
-            float newY = lastHeightEnd + ((tf.Count - 1 - i) * gameManager.sizeYBlock);
+            float newY = lastHeightEnd + ((tf.Count - 1 - i) * gamePlayManager.sizeYBlock);
             audioControl.StartDown();
 
             tf[i].DOLocalMove(new Vector3(0, newY, 0), TimeDownBlock);
@@ -126,32 +126,32 @@ public class Animation : Singleton<Animation>
 
         
 
-        HandleScore(blockEnd);
+        //HandleScore(blockEnd);
     }
 
-    private void HandleScore(BlockControl blockEnd)
+  /*  private void HandleScore(BlockControl blockEnd)
     {
          
          if(control.ListAni.Count > 0 )
             control.ListAni.RemoveAt(0);
         
-        if (gameManager.CheckScore(blockEnd) >= gameManager.MunberBlock && !gameManager.StartScaleScore)
+        if (gamePlayManager.CheckScore(blockEnd) >= gamePlayManager.MunberBlock && !gamePlayManager.StartScaleScore)
         {
-            gameManager.StartScaleScore = true;
+            gamePlayManager.StartScaleScore = true;
             uiManager.SetActiveScale(true);
             uiManager.SetActiveTextScale(true);
         }
 
-        if (gameManager.StartScaleScore)
+        if (gamePlayManager.StartScaleScore)
         {
-            gameManager.CountScaleScore++;
-            float value = (gameManager.CountScaleScore % 5) / 5f;
+            gamePlayManager.CountScaleScore++;
+            float value = (gamePlayManager.CountScaleScore % 5) / 5f;
             uiManager.SetScoreValue(value);
-            uiManager.SetTextScale("x" + (gameManager.CountScaleScore / 5 + 1).ToString());
+            uiManager.SetTextScale("x" + (gamePlayManager.CountScaleScore / 5 + 1).ToString());
         }
-         gameManager.SortAll();
+         gamePlayManager.SortAll();
     }
-
+*/
     public void AniStartButton(RectTransform transform)
     {
         transform.DOScale(1.2f, 0.5f)
@@ -162,7 +162,7 @@ public class Animation : Singleton<Animation>
   
     public IEnumerator PlusScore(BlockControl block, int score, float delay)
     {
-        gameManager.StartScaleScore = false;
+        gamePlayManager.StartScaleScore = false;
         block.ListChildBlock.RemoveRange(0, score);
         yield return new WaitForSeconds(delay);
 
@@ -202,7 +202,7 @@ public class Animation : Singleton<Animation>
             .SetEase(Ease.OutBack)
             .OnComplete(() =>
             {
-                uiManager.SetTextScale("+" + (gameManager.ScorePluss * ((gameManager.CountScaleScore / 5) + 1)).ToString());
+                uiManager.SetTextScale("+" + (gamePlayManager.ScorePluss * ((gamePlayManager.CountScaleScore / 5) + 1)).ToString());
                 DOTween.To(() => textSale.fontSize,
                     x => textSale.fontSize = x,
                     30, 0.2f)
@@ -222,12 +222,12 @@ public class Animation : Singleton<Animation>
                                 TransformText.anchoredPosition = startPos;
                                 textSale.fontSize = startFontSize;
 
-                                gameManager.UpdateScore();
+                                gamePlayManager.UpdateScore();
                             });
                     });
             });
-        gameManager.CheckBlock();
-        gameManager.SortAll();
+    /*    gamePlayManager.CheckBlock();
+        gamePlayManager.SortAll();*/
         control.ScorePlus = false;
         control.IsRun = false;
     }

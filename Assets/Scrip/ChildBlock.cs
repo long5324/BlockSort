@@ -1,7 +1,15 @@
+using DG.Tweening.Core.Easing;
 using UnityEngine;
 
 [System.Serializable]
-public class ChildBlock
+public class ChildBlock : MonoBehaviour
 {
-    public Material Material { set; get; }
+    GameManager gameManager;
+    public BlockColor CurrenColor;
+    public void InitBlock(BlockColor Color)
+    {
+        CurrenColor = Color;
+        gameManager = GameManager.Instance;
+        GetComponent<Renderer>().material = gameManager.BlockData.GetMaterial(Color);
+    }
 }
