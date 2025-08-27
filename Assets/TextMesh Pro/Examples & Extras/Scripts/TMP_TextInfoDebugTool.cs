@@ -2,7 +2,7 @@
 using UnityEngine;
 using System.Collections;
 using UnityEditor;
-
+using TMPro;
 
 namespace TMPro.Examples
 {

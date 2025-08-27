@@ -5,13 +5,15 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static ObjectBoolingControler;
+using static Unity.VisualScripting.Metadata;
 
 public class Animation : Singleton<Animation>
 {
-    [SerializeField] public float TimeUpBlock { get; private set; } = 0.05f;
-    [SerializeField] public float TimeMoveBlock { get; private set; } = 0.05f;
-    [SerializeField] public float TimeDownBlock { get; private set; } = 0.05f;
-
+    [SerializeField] public float TimeUpBlock { get; private set; } = 0.06f;
+    [SerializeField] public float TimeMoveBlock { get; private set; } = 0.06f;
+    [SerializeField] public float TimeDownBlock { get; private set; } = 0.06f;
+    private ObjectBoolingControler Booling;
     private AudioControl audioControl;
     private AnimationControl control;
     private GamePlayManager gamePlayManager;
@@ -19,6 +21,7 @@ public class Animation : Singleton<Animation>
 
     private void Start()
     {
+        Booling = ObjectBoolingControler.Instance;
         audioControl = AudioControl.Instance;
         control = AnimationControl.Instance;
         gamePlayManager = GamePlayManager.Instance;
@@ -28,31 +31,17 @@ public class Animation : Singleton<Animation>
     public void ChangeBlock(BlockControl start, BlockControl end, int countBlock)
     {
         List<Transform> listBlockChange = new List<Transform>();
-        for (int i = 0; i < countBlock; i++)
+
+        int startIndex = start.transform.childCount - 1; 
+        int endIndex = Mathf.Max(startIndex - countBlock + 1, 0);
+        for (int i = startIndex; i >= endIndex; i--)
         {
-            if (start.transform.childCount > i && start.transform.GetChild(i) == null) continue;
-            listBlockChange.Add(start.transform.GetChild(i));
+            Transform child = start.transform.GetChild(i);
+            if (child == null || start.ListChildBlock[i].CurrenColor != end.ListChildBlock[end.ListChildBlock.Count-1].CurrenColor) continue; 
+            listBlockChange.Add(child);
         }
 
         UpBlock(listBlockChange, end.transform.childCount * gamePlayManager.sizeYBlock + 0.006f, 0.005f, end);
-    }
-    
-    public void StartAni()
-    {
-        foreach (var block in gamePlayManager.ListBlockGamePlay)
-        {
-            for (int j = 0; j < block.transform.childCount; j++)
-            {
-                Vector3 pos = block.transform.GetChild(j).transform.position;
-                StartCoroutine(MoveBlocksSequential(block.transform.GetChild(j).transform, 0.05f * j, pos));
-            }
-        }
-    }
-
-    private IEnumerator MoveBlocksSequential(Transform tf, float time, Vector3 pos)
-    {
-        yield return new WaitForSeconds(time);
-        tf.DOMove(new Vector3(pos.x, pos.y - 4, pos.z), 0.1f);
     }
 
     public void UpBlock(List<Transform> tf, float heightUp, float distanceBlock, BlockControl blockEnd)
@@ -97,7 +86,6 @@ public class Animation : Singleton<Animation>
             if (tf[i] == null) continue;
 
             tf[i].SetParent(blockEnd.transform);
-            tf[i].transform.SetSiblingIndex(0);
 
             float newY = tf[i].transform.localPosition.y;
             audioControl.StartMove();
@@ -106,7 +94,7 @@ public class Animation : Singleton<Animation>
 
         yield return new WaitForSeconds(TimeMoveBlock + 0.05f);
         yield return StartCoroutine(WaitDownSequential(tf, blockEnd, heightLast, TimeDownBlock, 0.1f));
-        control.IsRun = false;
+      
     }
 
     IEnumerator WaitDownSequential(List<Transform> tf, BlockControl blockEnd, float lastHeightEnd, float timeWait, float delayBetweenBlocks)
@@ -115,7 +103,7 @@ public class Animation : Singleton<Animation>
 
         for (int i = tf.Count - 1; i >= 0; i--)
         {
-            float newY = lastHeightEnd + ((tf.Count - 1 - i) * gamePlayManager.sizeYBlock);
+            float newY = lastHeightEnd + ((tf.Count  - i) * gamePlayManager.sizeYBlock);
             audioControl.StartDown();
 
             tf[i].DOLocalMove(new Vector3(0, newY, 0), TimeDownBlock);
@@ -123,9 +111,15 @@ public class Animation : Singleton<Animation>
             yield return new WaitForSeconds(delayBetweenBlocks);
         }
         yield return new WaitForSeconds(TimeDownBlock + 0.05f);
-
+        control.ChangeInDataBlockControl();
+        if (control.ListAni[0].BlockStart.ListChildBlock.Count > 0)
+        {
+            gamePlayManager.CheckFirt(control.ListAni[0].BlockStart);
+        }
+        control.EndAnimation();
+        control.IsRun = false;
         
-
+        // control.EndAnimation();
         //HandleScore(blockEnd);
     }
 
@@ -159,7 +153,11 @@ public class Animation : Singleton<Animation>
             .SetEase(Ease.InOutSine);  
     }
 
-  
+    public IEnumerator WaitBack(List<Transform> children, float time)
+    {
+        yield return new WaitForSeconds(time);
+        Booling.ObjectBack(children);
+    }
     public IEnumerator PlusScore(BlockControl block, int score, float delay)
     {
         gamePlayManager.StartScaleScore = false;
@@ -168,36 +166,32 @@ public class Animation : Singleton<Animation>
 
         List<Transform> children = new List<Transform>();
 
-        for (int i = 0; i < score; i++)
+        for (int i = block.transform.childCount - 1; i >= block.transform.childCount - score; i--)
         {
-            Transform child = block.transform.GetChild(i);
-            if (child != null) children.Add(child);
+                Transform child = block.transform.GetChild(i);
+                // Thêm vào list
+                children.Add(child);
         }
 
-        float totalDuration = 1f; // Tổng thời gian cho toàn bộ animation
-        float singleTweenDuration = totalDuration / children.Count; // Thời gian cho mỗi tween
-
-        foreach (var child in children)
+        for (int i = 0; i < children.Count; i++)
         {
-            // Tạo tween với thời gian mỗi tween là singleTweenDuration
-            child.DOScale(Vector3.zero, singleTweenDuration);
-            yield return null; // Không cần wait, bởi vì DOTween sẽ tự xử lý thời gian
+            if (children[i] != null)
+                yield return children[i].DOScale(Vector3.zero, 0.1f).WaitForCompletion();
         }
 
-        foreach (var child in children)
-        {
-          
-            child.DOKill();
-            if (child != null) Destroy(child.gameObject);
-        }
+        // Khi vòng lặp xong, các bước tiếp theo chạy
+        StartCoroutine(WaitBack(children, 0.1f * children.Count));
         uiManager.SetActiveScale(false);
-
-       
+        StartCoroutine(WaitBack(children, 0.5f* score));
         RectTransform TransformText = uiManager.GetTransformTextSale();
         TextMeshProUGUI textSale = uiManager.GetTextSale();
         Vector2 startPos = TransformText.anchoredPosition;
         float startFontSize = textSale.fontSize;
-
+        foreach (var i in gamePlayManager.DelayCheck)
+        {
+            gamePlayManager.CheckFirt(i);
+        }
+/*      
         TransformText.DOAnchorPos(new Vector2(400, 520), 0.3f)
             .SetEase(Ease.OutBack)
             .OnComplete(() =>
@@ -225,10 +219,8 @@ public class Animation : Singleton<Animation>
                                 gamePlayManager.UpdateScore();
                             });
                     });
-            });
-    /*    gamePlayManager.CheckBlock();
-        gamePlayManager.SortAll();*/
+            });*/
         control.ScorePlus = false;
-        control.IsRun = false;
+       
     }
 }

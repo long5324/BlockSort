@@ -121,6 +121,33 @@ public class ObjectBoolingControler : Singleton<ObjectBoolingControler> {
             }
         }
     }
+    public void ObjectBack(List<Transform> List)
+    {
+        if(List.Count ==0 )    return;
+        foreach (Transform container in transform)
+        {
+            if (container.gameObject.name == List[0].GetComponent<ChildBlock>().CurrenColor.ToString())
+            {
+                foreach (var obj in List)
+                {
+                    obj.gameObject.SetActive(false);
+                    obj.SetParent(container);
+                }
+                break;
+            }
+        }
+
+        BlockColor color = List[0].GetComponent<ChildBlock>().CurrenColor;
+        foreach (var data in BoolingData)
+        {
+            if (data.color == color)
+            {
+                data.NumberNone += List.Count;
+                data.ObjectChild.InsertRange(0, List);
+                break;
+            }
+        }
+    }
 
     public void SpawnBlockChidColor(int NumberInit, BlockColor color)
     {

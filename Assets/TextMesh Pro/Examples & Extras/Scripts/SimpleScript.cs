@@ -41,8 +41,12 @@ namespace TMPro.Examples
             //m_textMeshPro.characterSpacing = 0.2f;
             //m_textMeshPro.wordSpacing = 0.1f;
 
-            //m_textMeshPro.enableCulling = true;
-            m_textMeshPro.textWrappingMode = TextWrappingModes.NoWrap;
+            //m_textMeshPro.enableCulling = true;// Nếu muốn không wrap (NoWrap)
+            m_textMeshPro.enableWordWrapping = false;
+
+            // Nếu muốn wrap (Normal)
+            m_textMeshPro.enableWordWrapping = true;
+
 
             //textMeshPro.fontColor = new Color32(255, 255, 255, 255);
         }

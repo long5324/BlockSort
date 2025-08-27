@@ -27,7 +27,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     private float referenceHeight = 2280f;
     GameManager gameManager;
     ObjectBoolingControler ObjectBooling;
-
+    public List<BlockControl> DelayCheck = new List<BlockControl>();
     private void Start()
     {
         animationControl = AnimationControl.Instance;
@@ -52,15 +52,15 @@ public class GamePlayManager : Singleton<GamePlayManager>
             }
         RandomSpawnBlockChild();
         setColliderSize();
-       /* setPause(true);
-        setActiveListGamePlay(false);
-        SetStartBlockPlay();*/
+        /* setPause(true);
+         setActiveListGamePlay(false);
+         SetStartBlockPlay();*/
     }
 
    
     private void Update()
     {
-        if (selectedBlock == null &&Input.GetMouseButtonDown(0))
+        if (selectedBlock == null && Input.GetMouseButtonDown(0))
         {
             TargetBlockPlay();
         }
@@ -70,19 +70,16 @@ public class GamePlayManager : Singleton<GamePlayManager>
         }
         if (Input.GetMouseButtonUp(0))
         {
-          
+
             SetAllDefaut();
             EndClicK();
-            SetBlock();
-           
-
         }
-        /*if (CheckLose() && animationControl.ListAni.Count == 0)
+        if (CheckLose() && animationControl.ListAni.Count == 0)
         {
             SaveScore(CurrenScore);
             uiManager.Losegame();
 
-        }*/
+        }
     }
     public void setColliderSize()
     {
@@ -227,9 +224,9 @@ public class GamePlayManager : Singleton<GamePlayManager>
 
     public void CheckFirt(BlockControl P)
     {
+
         List<BlockControl> ListCheck = new List<BlockControl>();
-        int countCanChange = 0;
-        bool ManyColor=false;
+        int manychange = 0;
         foreach (var j in BottomBlock)
         {
             if (j.PosionBlock == P.PosionBlock + new Vector2(1, 1)
@@ -244,135 +241,87 @@ public class GamePlayManager : Singleton<GamePlayManager>
                 ListCheck.Add(j);
             }
         }
-        for (int i = 0; i < P.ListChildBlock.Count; i++) {
-            if (P.ListChildBlock[i].CurrenColor != P.ListChildBlock[P.ListChildBlock.Count - 1].CurrenColor)
+
+        foreach (var i in ListCheck)
+        {
+            if (i.ListChildBlock.Count == 0 || P.ListChildBlock.Count ==0) continue;
+
+            if (i.ListChildBlock[i.ListChildBlock.Count - 1].CurrenColor
+                == P.ListChildBlock[P.ListChildBlock.Count - 1].CurrenColor)
             {
-                ManyColor = true;
-                break;
+                manychange++;
             }
         }
-        foreach(var i in ListCheck)
+        foreach (var i in ListCheck)
         {
             if (i.ListChildBlock.Count == 0 || P.ListChildBlock.Count == 0) continue;
-            if (i.ListChildBlock[i.ListChildBlock.Count-1].CurrenColor == P.ListChildBlock[P.ListChildBlock.Count - 1].CurrenColor)
+
+            if (i.ListChildBlock[i.ListChildBlock.Count - 1].CurrenColor
+                == P.ListChildBlock[P.ListChildBlock.Count - 1].CurrenColor)
             {
-                if (ManyColor)
+                if(manychange ==1)
+                Sortspecifically(P, i);
+                else if(manychange >1)
                 {
                     Sortspecifically(i, P);
                 }
-                else
-                {
-                    Sortspecifically(P, i);
-
-                }
             }
         }
-/*        countCanChange = 0;
-        foreach (var k in ListCheck)
+        if(manychange == 0)
         {
-            // Kiểm tra nếu cả hai danh sách có ít nhất một phần tử và có cùng số lượng phần tử
-            if (k.ListChildBlock.Count > 0 && P.ListChildBlock.Count > 0)
-            {
-                int lastIndexK = k.ListChildBlock.Count - 1;
-                int lastIndexP = P.ListChildBlock.Count - 1;
-
-                // Kiểm tra nếu chỉ mục cuối cùng của cả hai danh sách là hợp lệ và có số lượng phần tử giống nhau
-                if (lastIndexK >= 0 && lastIndexP >= 0 &&
-                    k.ListChildBlock[lastIndexK].CurrenColor == P.ListChildBlock[lastIndexP].CurrenColor)
-                {
-                    countCanChange++;
-                }
-            }
+            SortAll();
         }
-
-        if (countCanChange > 0)
-        {
-            CheckFirt(P);
-        }*/
-
+       
     }
-  /*  public void CheckBlock()
-    {
-
-        for (int i = 0; i < BottomBlockGameObject.transform.childCount; i++)
-        {
-            Transform childTransform = BottomBlockGameObject.transform.GetChild(i);
-            BlockControl bt = childTransform.GetComponent<BlockControl>();
-
-            bt.ListChildBlock.Clear();
-
-            for (int j = 0; j < childTransform.childCount; j++)
-            {
-                Transform childBlockTransform = childTransform.GetChild(j);
-                ChildBlock child = new ChildBlock();
-
-                child.Material = childBlockTransform.GetComponent<Renderer>().material;
-
-                bt.ListChildBlock.Add(child);
-            }
-        }
-    }
-*/
-
     public void setPause(bool b)
     {
         pause = b;
     }
     public void SortAll()
     {
-        bool check = false;
         for (int i = 0; i < BottomBlock.Count; i++)
         {
-            if (BottomBlock[i].ListChildBlock.Count == 0) continue;
+            var current = BottomBlock[i];
+            if (current.ListChildBlock.Count == 0) continue;
 
             List<BlockControl> ListCheck = new List<BlockControl>();
             foreach (var j in BottomBlock)
             {
-                if (j.PosionBlock == BottomBlock[i].PosionBlock + new Vector2(1, 1)
-                    || j.PosionBlock == BottomBlock[i].PosionBlock + new Vector2(-1, -1)
-                    || j.PosionBlock == BottomBlock[i].PosionBlock + new Vector2(1, 0)
-                    || j.PosionBlock == BottomBlock[i].PosionBlock + new Vector2(0, 1)
-                    || j.PosionBlock == BottomBlock[i].PosionBlock + new Vector2(-1, 0)
-                    || j.PosionBlock == BottomBlock[i].PosionBlock + new Vector2(0, -1)
-                    || j.PosionBlock == BottomBlock[i].PosionBlock + new Vector2(1, -1)
-                    || j.PosionBlock == BottomBlock[i].PosionBlock + new Vector2(-1, 1))
+                Vector2 diff = j.PosionBlock - current.PosionBlock;
+                if (diff == new Vector2(1, 1) || diff == new Vector2(-1, -1) ||
+                    diff == new Vector2(1, 0) || diff == new Vector2(0, 1) ||
+                    diff == new Vector2(-1, 0) || diff == new Vector2(0, -1) ||
+                    diff == new Vector2(1, -1) || diff == new Vector2(-1, 1))
                 {
                     ListCheck.Add(j);
                 }
             }
             foreach (var k in ListCheck)
             {
+                if (current.ListChildBlock.Count == 0) continue;
                 if (k.ListChildBlock.Count == 0) continue;
-                if (BottomBlock[i].transform.childCount == 0) continue;
-                if (BottomBlock[i].ListChildBlock.Count == 0) continue;
-                if (k.ListChildBlock[0].CurrenColor != BottomBlock[i].ListChildBlock[0].CurrenColor) continue;
-
-                Sortspecifically(BottomBlock[i], k);
+                if (k.ListChildBlock[0].CurrenColor != current.ListChildBlock[0].CurrenColor) continue;
+                Sortspecifically(current, k);
+                return;
             }
-        }
-        if (check)
-        {
-            SortAll();
         }
 
     }
     void Sortspecifically(BlockControl start, BlockControl end)
     {
+        foreach(var i in animationControl.ListAni)
+        {
+            if(i.BlockStart == start && i.BlockEnd == end) return;
+        }
         int countChange = 0;
         int indexSatrt = start.ListChildBlock.Count-1;
-        Debug.Log(indexSatrt + " " + start.ListChildBlock.Count);
         BlockColor Color = end.ListChildBlock[end.ListChildBlock.Count-1].CurrenColor;
-       
-
         while (indexSatrt>=0&&start.ListChildBlock[indexSatrt].CurrenColor == Color)
         {
             countChange++;
             indexSatrt--;
         }
-        Debug.Log(countChange);
         animationControl.AddAni(start, end, countChange);
-
-
     }
 
 
@@ -417,9 +366,17 @@ public class GamePlayManager : Singleton<GamePlayManager>
         {
             selectedBlock.ListChildBlock[i].transform.SetParent(TagertBlock.transform);
             selectedBlock.ListChildBlock[i].transform.localPosition = new Vector3(0,sizeYBlock*(i+1),0);
+            selectedBlock.ListChildBlock[i].transform.localRotation = Quaternion.identity;
+
             TagertBlock.ListChildBlock.Add(selectedBlock.ListChildBlock[i]);
         }
-        CheckFirt(TagertBlock);
+        if (!animationControl.ScorePlus)
+        {
+            CheckFirt(TagertBlock);
+        }
+        else {
+            DelayCheck.Add(TagertBlock);
+        }
         selectedBlock.ListChildBlock.Clear();
         CheckGamePlay();
     }
@@ -471,29 +428,21 @@ public class GamePlayManager : Singleton<GamePlayManager>
         
     }
 
-    /*  public int CheckScore(BlockControl Count)
-      {
-          int countScore = 1;
-          if (Count == null || Count.ListChildBlock == null || Count.ListChildBlock.Count == 0)
-              return 0;
-
-          if (Count.transform.childCount < MunberBlock)
-              return countScore;
-          string nameMaterial = Count.ListChildBlock[0].Material != null
-              ? Count.ListChildBlock[0].Material.name
-              : string.Empty;
-          while (countScore < Count.ListChildBlock.Count)
-          {
-              var block = Count.ListChildBlock[countScore];
-              if (block == null || block.Material == null) break;
-
-              if (block.Material.name != nameMaterial) break;
-
-              countScore++;
-          }
-
-          return countScore;
-      }*/
+    public int CheckScore(BlockControl Count)
+    {
+        int countScore = 0;
+        BlockColor Color = Count.ListChildBlock[Count.ListChildBlock.Count-1].CurrenColor;
+        for(int i = Count.ListChildBlock.Count - 1; i >=0; i--)
+        {
+            if (Count.ListChildBlock[i].CurrenColor == Color)
+            {
+                countScore++;
+            }
+            else { break; }
+        }
+    
+        return countScore;
+    }
     private void OnApplicationQuit()
     {
         SaveScore(CurrenScore);

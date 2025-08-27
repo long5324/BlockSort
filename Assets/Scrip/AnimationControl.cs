@@ -1,8 +1,9 @@
 ﻿using DG.Tweening;
-using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
+using System.Xml.Serialization;
 using UnityEngine;
+using static AnimationControl;
 
 public class AnimationControl : Singleton<AnimationControl>
 {
@@ -14,19 +15,19 @@ public class AnimationControl : Singleton<AnimationControl>
         public int CountBlock;
     }
     public bool ScorePlus { get;  set; } = false;  
-    private Animation animation;
     private GamePlayManager gamePlayManager;
     private UIManager uiManager;
     bool delaysort = false;
+    Animation animation;
     public bool IsRun { get;  set; } = false;  
     public List<IfAnimation> ListAni { get; private set; } = new List<IfAnimation>();
 
     private void Start()
     {
-        gamePlayManager = GamePlayManager.Instance;
         animation = Animation.Instance;
+        gamePlayManager = GamePlayManager.Instance;
         uiManager = UIManager.Instance;
-        animation.AniStartButton(uiManager.getStartButton());
+        GetComponent<Animation>().AniStartButton(uiManager.getStartButton());
     }
     private void Update()
     {
@@ -38,10 +39,11 @@ public class AnimationControl : Singleton<AnimationControl>
         if (ListAni.Count > 0 && !IsRun && !ScorePlus && !delaysort)
         {
            StartCoroutine(DelaySort());
+            IsRun = true;
         }
         else if (ListAni.Count == 0 && !IsRun && !ScorePlus)
         {
-            //HandleScore();
+            HandleScore();
         }
 
     }
@@ -56,13 +58,11 @@ public class AnimationControl : Singleton<AnimationControl>
 
         if (firstAnimation != null && firstAnimation.BlockStart != null && firstAnimation.BlockEnd != null)
         {
-            animation.ChangeBlock(firstAnimation.BlockStart, firstAnimation.BlockEnd, firstAnimation.CountBlock);
-            IsRun = true;
+            GetComponent<Animation>().ChangeBlock(firstAnimation.BlockStart, firstAnimation.BlockEnd, firstAnimation.CountBlock);
         }
     }
-  /*  private void HandleScore()
+    private void HandleScore()
     {
-        // Đảm bảo BottomBlock không phải là null và có ít nhất một phần tử
         if (gamePlayManager.BottomBlock == null || gamePlayManager.BottomBlock.Count == 0) return;
 
         foreach (var block in gamePlayManager.BottomBlock)
@@ -77,9 +77,9 @@ public class AnimationControl : Singleton<AnimationControl>
                 StartCoroutine(animation.PlusScore(block, score, 0));
                 ScorePlus = true;
             }
-           
+
         }
-    }*/
+    }
     public void AddAni(BlockControl Start, BlockControl End, int countBlock)
     {
         if (Start == null || End == null)
@@ -95,5 +95,31 @@ public class AnimationControl : Singleton<AnimationControl>
         };
 
         ListAni.Add(newAnimation);
+    }
+    public void EndAnimation()
+    {
+        ListAni.RemoveAt(0);
+    }
+    public void ChangeInDataBlockControl()
+    {
+       foreach(var i in gamePlayManager.BottomBlock)
+        {
+            if(i == ListAni[0].BlockStart)
+            {
+                i.ListChildBlock.Clear();
+                foreach(Transform j in i.transform)
+                {
+                    i.ListChildBlock.Add(j.GetComponent<ChildBlock>());
+                }
+            }
+            else if(i == ListAni[0].BlockEnd)
+            {
+                i.ListChildBlock.Clear();
+                foreach (Transform j in i.transform)
+                {
+                    i.ListChildBlock.Add(j.GetComponent<ChildBlock>());
+                }
+            }
+        }
     }
 }
