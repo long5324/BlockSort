@@ -28,21 +28,27 @@ public class Animation : Singleton<Animation>
         uiManager = UIManager.Instance;
     }
 
-    public void ChangeBlock(BlockControl start, BlockControl end, int countBlock)
+    public void ChangeBlock(BlockControl start, BlockControl end, List<ChildBlock> ListChild)
     {
+       
         List<Transform> listBlockChange = new List<Transform>();
-
-        int startIndex = start.transform.childCount - 1; 
-        int endIndex = Mathf.Max(startIndex - countBlock + 1, 0);
-        for (int i = startIndex; i >= endIndex; i--)
+       
+        foreach ( var i in ListChild)
         {
-            Transform child = start.transform.GetChild(i);
-            if (child == null || start.ListChildBlock[i].CurrenColor != end.ListChildBlock[end.ListChildBlock.Count-1].CurrenColor) continue; 
-            listBlockChange.Add(child);
+            listBlockChange.Add(i.transform);
         }
-
-        UpBlock(listBlockChange, end.transform.childCount * gamePlayManager.sizeYBlock + 0.006f, 0.005f, end);
+        if (listBlockChange.Count == 0) { 
+            control.ListAni.RemoveAt(0);
+            return; }
+        if (listBlockChange.Count > 0)
+        {
+            UpBlock(listBlockChange,
+                end.transform.childCount * gamePlayManager.sizeYBlock + 0.006f,
+                0.005f,
+                end);
+        }
     }
+
 
     public void UpBlock(List<Transform> tf, float heightUp, float distanceBlock, BlockControl blockEnd)
     {
@@ -101,51 +107,58 @@ public class Animation : Singleton<Animation>
     {
         yield return new WaitForSeconds(timeWait);
 
-        for (int i = tf.Count - 1; i >= 0; i--)
-        {
-            float newY = lastHeightEnd + ((tf.Count  - i) * gamePlayManager.sizeYBlock);
-            audioControl.StartDown();
 
-            tf[i].DOLocalMove(new Vector3(0, newY, 0), TimeDownBlock);
+            for (int i = tf.Count - 1; i >= 0; i--)
+            {
+                if (tf[i] == null) continue;
 
-            yield return new WaitForSeconds(delayBetweenBlocks);
-        }
-        yield return new WaitForSeconds(TimeDownBlock + 0.05f);
-        control.ChangeInDataBlockControl();
-        if (control.ListAni[0].BlockStart.ListChildBlock.Count > 0)
-        {
-            gamePlayManager.CheckFirt(control.ListAni[0].BlockStart);
-        }
-        control.EndAnimation();
+                float newY = lastHeightEnd + ((tf.Count - i) * gamePlayManager.sizeYBlock);
+                audioControl.StartDown();
+
+                bool done = false;
+                tf[i].DOLocalMove(new Vector3(0, newY, 0), TimeDownBlock)
+                     .OnComplete(() => done = true);
+
+                yield return new WaitUntil(() => done);
+                yield return new WaitForSeconds(delayBetweenBlocks);
+            }
+
+            yield return new WaitForSeconds(TimeDownBlock + 0.05f);
+
+            control.ChangeInDataBlockControl();
+            if (control.ListAni.Count > 0 && control.ListAni[0].BlockStart.ListChildBlock.Count > 0)
+            {
+                gamePlayManager.CheckFirt(control.ListAni[0].BlockStart);
+            }
         control.IsRun = false;
-        
-        // control.EndAnimation();
-        //HandleScore(blockEnd);
+        control.EndAnimation();
+
     }
 
-  /*  private void HandleScore(BlockControl blockEnd)
-    {
-         
-         if(control.ListAni.Count > 0 )
-            control.ListAni.RemoveAt(0);
-        
-        if (gamePlayManager.CheckScore(blockEnd) >= gamePlayManager.MunberBlock && !gamePlayManager.StartScaleScore)
-        {
-            gamePlayManager.StartScaleScore = true;
-            uiManager.SetActiveScale(true);
-            uiManager.SetActiveTextScale(true);
-        }
 
-        if (gamePlayManager.StartScaleScore)
-        {
-            gamePlayManager.CountScaleScore++;
-            float value = (gamePlayManager.CountScaleScore % 5) / 5f;
-            uiManager.SetScoreValue(value);
-            uiManager.SetTextScale("x" + (gamePlayManager.CountScaleScore / 5 + 1).ToString());
-        }
-         gamePlayManager.SortAll();
-    }
-*/
+    /*  private void HandleScore(BlockControl blockEnd)
+      {
+
+           if(control.ListAni.Count > 0 )
+              control.ListAni.RemoveAt(0);
+
+          if (gamePlayManager.CheckScore(blockEnd) >= gamePlayManager.MunberBlock && !gamePlayManager.StartScaleScore)
+          {
+              gamePlayManager.StartScaleScore = true;
+              uiManager.SetActiveScale(true);
+              uiManager.SetActiveTextScale(true);
+          }
+
+          if (gamePlayManager.StartScaleScore)
+          {
+              gamePlayManager.CountScaleScore++;
+              float value = (gamePlayManager.CountScaleScore % 5) / 5f;
+              uiManager.SetScoreValue(value);
+              uiManager.SetTextScale("x" + (gamePlayManager.CountScaleScore / 5 + 1).ToString());
+          }
+           gamePlayManager.SortAll();
+      }
+  */
     public void AniStartButton(RectTransform transform)
     {
         transform.DOScale(1.2f, 0.5f)
@@ -182,15 +195,11 @@ public class Animation : Singleton<Animation>
         // Khi vòng lặp xong, các bước tiếp theo chạy
         StartCoroutine(WaitBack(children, 0.1f * children.Count));
         uiManager.SetActiveScale(false);
-        StartCoroutine(WaitBack(children, 0.5f* score));
         RectTransform TransformText = uiManager.GetTransformTextSale();
         TextMeshProUGUI textSale = uiManager.GetTextSale();
         Vector2 startPos = TransformText.anchoredPosition;
         float startFontSize = textSale.fontSize;
-        foreach (var i in gamePlayManager.DelayCheck)
-        {
-            gamePlayManager.CheckFirt(i);
-        }
+        gamePlayManager.DelayCheck.Add(block);
 /*      
         TransformText.DOAnchorPos(new Vector2(400, 520), 0.3f)
             .SetEase(Ease.OutBack)

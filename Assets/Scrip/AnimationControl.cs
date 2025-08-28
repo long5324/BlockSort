@@ -38,7 +38,8 @@ public class AnimationControl : Singleton<AnimationControl>
         else delaysort = false; 
         if (ListAni.Count > 0 && !IsRun && !ScorePlus && !delaysort)
         {
-           StartCoroutine(DelaySort());
+            Debug.Log("ok");
+            StartCoroutine(DelaySort());
             IsRun = true;
         }
         else if (ListAni.Count == 0 && !IsRun && !ScorePlus)
@@ -58,7 +59,9 @@ public class AnimationControl : Singleton<AnimationControl>
 
         if (firstAnimation != null && firstAnimation.BlockStart != null && firstAnimation.BlockEnd != null)
         {
-            GetComponent<Animation>().ChangeBlock(firstAnimation.BlockStart, firstAnimation.BlockEnd, firstAnimation.CountBlock);
+            GetComponent<Animation>().ChangeBlock(firstAnimation.BlockStart, firstAnimation.BlockEnd, firstAnimation.BlockStart.GetSameBlock());
+            Debug.Log(firstAnimation.BlockStart.CheckColor() + " " + firstAnimation.BlockEnd.CheckColor());
+
         }
     }
     private void HandleScore()

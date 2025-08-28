@@ -5,50 +5,58 @@ using System.Drawing;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
 
-public class InitGrid : MonoBehaviour
+public class InitGrid : Singleton<InitGrid>
 {
     public float  sizeGrid = 1;
     public int NumberInit = 4;
-    public Vector3 DefaultCenter = new Vector3(0, 1, 0);
+    public Vector3 DefaultCenter = new Vector3(5.5f, -5, 1);
     public bool DrawGrid=false ;
-    List<Vector3> CenterGird = new List<Vector3>();
-    List<BlockControl> ListblockGround = new List<BlockControl>();
+    [SerializeField] List<Vector3> CenterGird = new List<Vector3>();
+    public  List<BlockData> ListblockGround  = new List<BlockData>();
+    public LevelSave NewLevel;
     [ContextMenu("Init Grid")]
     public void StartInitGrid()
     {
         CenterGird.Clear();
-     
-        CenterGird.Add(DefaultCenter);
-
+        CenterGird.Add(Vector3.zero);
         List<Vector3> frontier = new List<Vector3>();
-        frontier.Add(DefaultCenter);
+        frontier.Add(Vector3.zero);
 
-        for (int j = 0; j < NumberInit; j++)
+        float halfSize = sizeGrid / 2f;
+
+        for (int step = 0; step < NumberInit; step++)
         {
             List<Vector3> newFrontier = new List<Vector3>();
 
-            for (int i = 0; i < frontier.Count; i++)
+            foreach (var center in frontier)
             {
-                Vector3 CenterCheck = frontier[i];
-                List<Vector3> ListAdd = GetHexNeighbors(CenterCheck);
+                List<Vector3> neighbors = new List<Vector3>()
+            {
+                RoundVector(center + new Vector3(sizeGrid, 0, 0)),  // phải
+                RoundVector(center + new Vector3(-sizeGrid, 0, 0)), // trái
+                RoundVector(center + new Vector3(0, 0, sizeGrid)),  // trên
+                RoundVector(center + new Vector3(0, 0, -sizeGrid))  // dưới
+            };
 
-                for (int k = ListAdd.Count - 1; k >= 0; k--)
+                // Chỉ thêm neighbor chưa có trong grid
+                for (int k = neighbors.Count - 1; k >= 0; k--)
                 {
-                    if (CheckGrid(ListAdd[k]))
+                    if (CheckGrid(neighbors[k]))
                     {
-                        ListAdd.RemoveAt(k);
+                        neighbors.RemoveAt(k);
                     }
                 }
 
-                CenterGird.AddRange(ListAdd);
-                newFrontier.AddRange(ListAdd);
+                CenterGird.AddRange(neighbors);
+                newFrontier.AddRange(neighbors);
             }
 
-            frontier = newFrontier;
+            frontier = newFrontier; // cập nhật frontier cho bước tiếp theo
         }
+        SetupBlock();
     }
-    [ContextMenu("Setup Block")]
     public void SetupBlock()
     {
         ListblockGround.Clear();
@@ -56,38 +64,70 @@ public class InitGrid : MonoBehaviour
     }
     void ChangePositonGround()
     {
-        foreach(Transform i in gameObject.transform)
+        ListblockGround.Clear();  // reset list trước
+
+        foreach (Transform i in transform)
         {
-            float Distance = DistanceXZ(i.transform.position, CenterGird[0] );
+            Vector3 local = i.localPosition;
+            float Distance = DistanceXZ(local, CenterGird[0]);
             Vector3 newPosition = CenterGird[0];
+
             foreach (var j in CenterGird)
             {
-                if(Vector3.Distance(j,i.position) < Distance)
+                if (Vector3.Distance(j, local) < Distance)
                 {
-                    Distance = DistanceXZ(j , i.position);
+                    Distance = DistanceXZ(j, local);
                     newPosition = j;
                 }
             }
-            i.position = new Vector3(newPosition.x , i.position.y , newPosition.z);
-            BlockControl bc = i.GetComponent<BlockControl>();
-            ListblockGround.Add(bc);
-            bc.ClearLink();
+
+            i.localPosition = new Vector3(newPosition.x, 0, newPosition.z);
+
+            BlockControl bcComponent = i.GetComponent<BlockControl>();
+            if (bcComponent != null)
+            {
+                bcComponent.PosionBlock = i.localPosition;
+                bcComponent.ClearLink();
+
+                // Thêm bản sao dữ liệu vào list
+                BlockData bcData = new BlockData(bcComponent);
+                ListblockGround.Add(bcData);
+            }
         }
+
+        // nếu cần remove cái cuối thì dùng ListBlockData
+        if (ListblockGround.Count > 0)
+            ListblockGround.RemoveAt(ListblockGround.Count - 1);
+
         LinkGroud();
     }
+    [ContextMenu("SaveLevel")]
+    public void SaveLevel()
+    {
+        NewLevel.Database.sizeGrid = sizeGrid;
+        NewLevel.Database.NumberInit = NumberInit;
+        NewLevel.Database.DefaultCenter = DefaultCenter;
+
+        // Tạo bản sao list Vector3
+        NewLevel.Database.CenterGird = new List<Vector3>(CenterGird);
+
+        // Tạo bản sao BlockData (không lưu BlockControl trực tiếp)
+        List<BlockData> blockDataList = new List<BlockData>();
+        foreach (var bc in ListblockGround)
+        {
+            blockDataList.Add(bc); 
+        }
+        NewLevel.Database.ListblockGround = blockDataList;
+    }
+
     void LinkGroud()
     {
-        foreach(var i in ListblockGround)
+        foreach(Transform i in gameObject.transform)
         {
-            List<Vector3> ListCheck = GetHexNeighbors(i.transform.position);
-            foreach(var j in ListCheck)
-            {
-                foreach (var k in ListblockGround)
-                {
-                    if(j.z == k.transform.position.z && j.x == k.transform.position.x)
-                    i.BlockLink.Add(k.GetComponent<BlockControl>());
-                }
-            }
+            BlockControl Center =  i.GetComponent<BlockControl>();
+            if (Center == null) continue;
+            Vector3 local = i.localPosition;
+            Center.BlockLink = GetBlockLink(local);
         }
     }
     bool CheckGrid(Vector3 Check)
@@ -108,21 +148,43 @@ public class InitGrid : MonoBehaviour
     }
     public List<Vector3> GetHexNeighbors(Vector3 center)
     {
-        float dx = Mathf.Sqrt(3f) / 2f * sizeGrid; // ~0.866 * size
-        float dz = 0.5f * sizeGrid;
 
         List<Vector3> ListReturn = new List<Vector3>();
-
-        ListReturn.Add(RoundVector(center + new Vector3(dx, 0, dz)));   // phải trên
-        ListReturn.Add(RoundVector(center + new Vector3(dx, 0, -dz)));  // phải dưới
+        ListReturn.Add(RoundVector(center + new Vector3(sizeGrid, 0, 0)));  // phải
+        ListReturn.Add(RoundVector(center + new Vector3(-sizeGrid, 0, 0)));// trái
         ListReturn.Add(RoundVector(center + new Vector3(0, 0, sizeGrid)));  // trên
-        ListReturn.Add(RoundVector(center + new Vector3(0, 0, -sizeGrid))); // dưới
-        ListReturn.Add(RoundVector(center + new Vector3(-dx, 0, dz)));  // trái trên
-        ListReturn.Add(RoundVector(center + new Vector3(-dx, 0, -dz))); // trái dưới
+        ListReturn.Add(RoundVector(center + new Vector3(0, 0, -sizeGrid)));  // dưới
+        ListReturn.Add(RoundVector(center + new Vector3(sizeGrid, 0, sizeGrid)));  // trên
+        ListReturn.Add(RoundVector(center + new Vector3(-sizeGrid, 0, -sizeGrid)));  // dưới
+        ListReturn.Add(RoundVector(center + new Vector3(-sizeGrid, 0, sizeGrid)));  // trên
+        ListReturn.Add(RoundVector(center + new Vector3(sizeGrid, 0, -sizeGrid)));  // dưới
+
 
         return ListReturn;
     }
-
+    public List<BlockControl> GetBlockLink(Vector3 Center)
+    {
+        List<BlockControl> ListReturn = new List<BlockControl>();
+        List<Vector3> ListAround = GetHexNeighbors(Center);
+       
+        foreach (var j in ListAround)
+        {
+            foreach (Transform i in transform)
+            {
+                if (Vector3.zero == Center) Debug.Log(i.localPosition  + "  " + j);
+                Vector3 local = i.localPosition;
+                if (j == local)
+                {
+                    BlockControl Block = i.GetComponent<BlockControl>();
+                    if (Block != null)
+                    {
+                        ListReturn.Add(Block);
+                    }
+                }
+            }
+        }
+        return ListReturn;
+    }
     private Vector3 RoundVector(Vector3 v)
     {
         return new Vector3(
@@ -131,40 +193,33 @@ public class InitGrid : MonoBehaviour
             Mathf.Round(v.z * 100f) / 100f
         );
     }
-
-
-
     void OnDrawGizmos()
     {
         if(!DrawGrid) return ;
         Gizmos.color = UnityEngine.Color.red;
 
         foreach (var i in CenterGird) {
-            DrawHex(i, sizeGrid);
+            DrawRect(i+DefaultCenter, sizeGrid, sizeGrid);
         }
-
     }
-    void DrawHex(Vector3 center, float width)
+    void DrawRect(Vector3 center, float width, float height)
     {
-        float radius = width / 2f;
-        float outerRadius = radius / Mathf.Cos(Mathf.PI / 6f);
-
-        Vector3[] points = new Vector3[6];
-        for (int i = 0; i < 6; i++)
-        {
-            float angle = Mathf.Deg2Rad * (60 * i);
-            points[i] = center + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * outerRadius;
-        }
+        // Tính 4 góc của hình chữ nhật
+        Vector3 halfSize = new Vector3(width / 2f, 0, height / 2f);
+        Vector3[] points = new Vector3[4];
+        points[0] = center + new Vector3(-halfSize.x, 0, -halfSize.z); // góc dưới trái
+        points[1] = center + new Vector3(-halfSize.x, 0, halfSize.z);  // góc trên trái
+        points[2] = center + new Vector3(halfSize.x, 0, halfSize.z);   // góc trên phải
+        points[3] = center + new Vector3(halfSize.x, 0, -halfSize.z);  // góc dưới phải
 
         // Vẽ nhiều lần để "đậm" hơn
         for (int j = 0; j < 3; j++) // 3 lần cho dày hơn
         {
-            for (int i = 0; i < 6; i++)
+            Vector3 offset = new Vector3(0, 0.001f * j, 0);
+            for (int i = 0; i < 4; i++)
             {
-                Vector3 offset = new Vector3(0, 0.001f * j, 0);
-                Gizmos.DrawLine(points[i] + offset, points[(i + 1) % 6] + offset);
+                Gizmos.DrawLine(points[i] + offset, points[(i + 1) % 4] + offset);
             }
         }
     }
-
 }

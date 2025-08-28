@@ -7,10 +7,10 @@ using static UnityEngine.GraphicsBuffer;
 public class GamePlayManager : Singleton<GamePlayManager>
 {
     public List<GameObject> ListBlockGamePlay;
-    [SerializeField] GameObject BottomBlockGameObject;
     [SerializeField] public float sizeYBlock { get; set; } = 0.003f;
     [SerializeField] public float MunberBlock = 11;
-    public List<BlockControl> BottomBlock { get; set; } = new List<BlockControl>();
+    InitGrid initGrid;
+    public List<BlockControl> BottomBlock ;
     Camera cam;
     ObjectSet selectedBlock;
     public BlockControl TagertBlock { get; set; }
@@ -30,6 +30,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     public List<BlockControl> DelayCheck = new List<BlockControl>();
     private void Start()
     {
+        initGrid = InitGrid.Instance;
         animationControl = AnimationControl.Instance;
         ObjectBooling = ObjectBoolingControler.Instance;
         gameManager = GameManager.Instance;
@@ -40,24 +41,16 @@ public class GamePlayManager : Singleton<GamePlayManager>
         {
             ListDefaulPossitionBlockGamePlay.Add(i.transform.position);
         }
-        if (BottomBlockGameObject != null)
-            for (int i = 0; i < BottomBlockGameObject.transform.childCount - 1; i++)
-            {
-                for (int j = 0; j < BottomBlockGameObject.transform.GetChild(i).childCount; j++)
-                {
-                    BottomBlockGameObject.transform.GetChild(i).GetChild(j).GetComponent<BlockControl>().PosionBlock = new Vector2(i, j);
-                    BottomBlock.Add(BottomBlockGameObject.transform.GetChild(i).GetChild(j).gameObject.GetComponent<BlockControl>());
-                }
-
-            }
-        RandomSpawnBlockChild();
-        setColliderSize();
+        foreach(Transform i in transform)
+        {
+            BottomBlock.Add(i.GetComponent<BlockControl>());
+        }
+      
+       
         /* setPause(true);
          setActiveListGamePlay(false);
          SetStartBlockPlay();*/
     }
-
-   
     private void Update()
     {
         if (selectedBlock == null && Input.GetMouseButtonDown(0))
@@ -69,16 +62,19 @@ public class GamePlayManager : Singleton<GamePlayManager>
             CheckBottomBlock();
         }
         if (Input.GetMouseButtonUp(0))
-        {
-
+        { 
             SetAllDefaut();
             EndClicK();
         }
         if (CheckLose() && animationControl.ListAni.Count == 0)
         {
             SaveScore(CurrenScore);
-            uiManager.Losegame();
-
+          //  uiManager.Losegame();
+        }
+        if(!animationControl.IsRun &&animationControl.ListAni.Count == 0 && DelayCheck.Count >0)
+        {
+            CheckFirt(DelayCheck[0]);
+            DelayCheck.RemoveAt(0);
         }
     }
     public void setColliderSize()
@@ -224,54 +220,18 @@ public class GamePlayManager : Singleton<GamePlayManager>
 
     public void CheckFirt(BlockControl P)
     {
-
-        List<BlockControl> ListCheck = new List<BlockControl>();
-        int manychange = 0;
-        foreach (var j in BottomBlock)
+        
+        List<BlockControl> ListBlock = P.CheckArow();
+        if(ListBlock == null || ListBlock.Count == 0) return;
+        if (ListBlock.Count == 1) {
+            animationControl.AddAni(P,ListBlock[0], P.GetNumberSameColor()); 
+        }else if (ListBlock.Count > 1)
         {
-            if (j.PosionBlock == P.PosionBlock + new Vector2(1, 1)
-                || j.PosionBlock == P.PosionBlock + new Vector2(-1, -1)
-                || j.PosionBlock == P.PosionBlock + new Vector2(1, 0)
-                || j.PosionBlock == P.PosionBlock + new Vector2(0, 1)
-                || j.PosionBlock == P.PosionBlock + new Vector2(-1, 0)
-                || j.PosionBlock == P.PosionBlock + new Vector2(0, -1)
-                || j.PosionBlock == P.PosionBlock + new Vector2(1, -1)
-                || j.PosionBlock == P.PosionBlock + new Vector2(-1, 1))
+            foreach (var i in ListBlock)
             {
-                ListCheck.Add(j);
+                animationControl.AddAni(i,P , i.GetNumberSameColor()); 
             }
-        }
-
-        foreach (var i in ListCheck)
-        {
-            if (i.ListChildBlock.Count == 0 || P.ListChildBlock.Count ==0) continue;
-
-            if (i.ListChildBlock[i.ListChildBlock.Count - 1].CurrenColor
-                == P.ListChildBlock[P.ListChildBlock.Count - 1].CurrenColor)
-            {
-                manychange++;
-            }
-        }
-        foreach (var i in ListCheck)
-        {
-            if (i.ListChildBlock.Count == 0 || P.ListChildBlock.Count == 0) continue;
-
-            if (i.ListChildBlock[i.ListChildBlock.Count - 1].CurrenColor
-                == P.ListChildBlock[P.ListChildBlock.Count - 1].CurrenColor)
-            {
-                if(manychange ==1)
-                Sortspecifically(P, i);
-                else if(manychange >1)
-                {
-                    Sortspecifically(i, P);
-                }
-            }
-        }
-        if(manychange == 0)
-        {
-            SortAll();
-        }
-       
+        } 
     }
     public void setPause(bool b)
     {
@@ -309,19 +269,8 @@ public class GamePlayManager : Singleton<GamePlayManager>
     }
     void Sortspecifically(BlockControl start, BlockControl end)
     {
-        foreach(var i in animationControl.ListAni)
-        {
-            if(i.BlockStart == start && i.BlockEnd == end) return;
-        }
-        int countChange = 0;
-        int indexSatrt = start.ListChildBlock.Count-1;
-        BlockColor Color = end.ListChildBlock[end.ListChildBlock.Count-1].CurrenColor;
-        while (indexSatrt>=0&&start.ListChildBlock[indexSatrt].CurrenColor == Color)
-        {
-            countChange++;
-            indexSatrt--;
-        }
-        animationControl.AddAni(start, end, countChange);
+
+        
     }
 
 
@@ -335,30 +284,17 @@ public class GamePlayManager : Singleton<GamePlayManager>
             }
         else
         {
-            SetBlock();
+          
              for (int i = 0; i < ListBlockGamePlay.Count; i++)
             {
                 ListBlockGamePlay[i].transform.position = ListDefaulPossitionBlockGamePlay[i];
             }
         }
-            TagertBlock = null;
-            selectedBlock = null;
+        SetBlock();
+        TagertBlock = null;
+        selectedBlock = null;
     }
-   /* void ChangeChildBlock(BlockControl Start, BlockControl End)
-    {
 
-        int countChange = Start.transform.childCount;
-        for (int i = countChange - 1; i >= 0; i--)
-        {
-            Transform child = Start.transform.GetChild(i);
-            child.SetParent(End.transform);
-            child.localPosition = new Vector3(0, sizeYBlock * (countChange + 1 - End.transform.childCount), 0);
-            child.localScale = Vector3.one;
-            child.localRotation = Quaternion.identity;
-            End.ListChildBlock.Add(Start.ListChildBlock[i]);
-        }
-        Start.ListChildBlock.Clear();
-    }*/
     void SetBlock()
     {
         if (selectedBlock == null || TagertBlock == null) return;
@@ -370,15 +306,17 @@ public class GamePlayManager : Singleton<GamePlayManager>
 
             TagertBlock.ListChildBlock.Add(selectedBlock.ListChildBlock[i]);
         }
-        if (!animationControl.ScorePlus)
+        if (animationControl.ScorePlus || animationControl.IsRun)
         {
-            CheckFirt(TagertBlock);
+            DelayCheck.Add(TagertBlock);
+           
         }
         else {
-            DelayCheck.Add(TagertBlock);
+            CheckFirt(TagertBlock);
         }
         selectedBlock.ListChildBlock.Clear();
         CheckGamePlay();
+       
     }
     void SetStartBlockPlay()
     {
@@ -392,7 +330,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         }
     }
 
-    void RandomSpawnBlockChild()
+    public void RandomSpawnBlockChild()
     {
         foreach (var i in ListBlockGamePlay)
         {
