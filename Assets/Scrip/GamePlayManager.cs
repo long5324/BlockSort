@@ -28,6 +28,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     GameManager gameManager;
     ObjectBoolingControler ObjectBooling;
     public List<BlockControl> DelayCheck = new List<BlockControl>();
+    public bool pausegame =false;
     private void Start()
     {
         animationControl = AnimationControl.Instance;
@@ -55,8 +56,13 @@ public class GamePlayManager : Singleton<GamePlayManager>
             BottomBlock.Add(i.GetComponent<BlockControl>());
         }
     }
+    public void SetPause( bool b)
+    {
+        pausegame = b;
+    }
     private void Update()
     {
+        if(pausegame) return;
         if (selectedBlock == null && Input.GetMouseButtonDown(0))
         {
             TargetBlockPlay();
@@ -328,7 +334,19 @@ public class GamePlayManager : Singleton<GamePlayManager>
             }
         }
     }
-
+    public void ResetGameplay()
+    {
+        foreach(var i in ListBlockGamePlay)
+        {
+            for (int j = i.transform.childCount - 1; j >= 0; j--)
+            {
+                DestroyImmediate(i.transform.GetChild(j).gameObject);
+                ObjectSet OS = i.transform.GetChild(j).gameObject.GetComponent<ObjectSet>();
+                OS = new ObjectSet();
+            }
+        }
+        RandomSpawnBlockChild();
+    }
     public void RandomSpawnBlockChild()
     {
         foreach (var i in ListBlockGamePlay)

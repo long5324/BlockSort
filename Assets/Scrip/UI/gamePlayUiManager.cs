@@ -11,6 +11,7 @@ public class gamePlayUiManager : Singleton<gamePlayUiManager>
     public List<CanvasGroup> WinUI;
     public List<CanvasGroup> SettingUi;
     public List<CanvasGroup> GamePlayUI;
+    public CanvasGroup MainUI;
     private void Start()
     {
         FillSocre.fillAmount = 0;
@@ -40,6 +41,27 @@ public class gamePlayUiManager : Singleton<gamePlayUiManager>
                 i.blocksRaycasts = false;
             }
         }
+        foreach (var i in GamePlayUI)
+        {
+            if (!t)
+            {
+                i.alpha = 1;
+                i.interactable = true;
+                i.blocksRaycasts = true;
+            }
+            else
+            {
+                i.alpha = 0;
+                i.interactable = false;
+                i.blocksRaycasts = false;
+            }
+        }
+    }
+    public void SetMainUi(bool b)
+    {
+        if(!b)
+        MainUI.alpha = 0;
+        else MainUI.alpha = 1;  
     }
     public void SetSetting(bool t)
     {

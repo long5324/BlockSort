@@ -91,6 +91,7 @@ public class GameManager : Singleton<GameManager>
     public void Winlevel()
     {
         gamePlayUiManager.SetWinUI(true);
+        gamePlayManger. pausegame = true;
     }
     public void NextLevel()
     {
@@ -99,5 +100,24 @@ public class GameManager : Singleton<GameManager>
         CurrenNumberLevel++;
         SetUpLevel(CurrenNumberLevel);
        
+    }
+    public void StartGamme()
+    {
+        gamePlayUiManager.SetSetting(false);
+    }
+    public void RePlay()
+    {
+        foreach (Transform i in CurrenLevel.transform)
+        {
+            for (int j = i.childCount - 1; j >= 0; j--)
+            {
+                BlockControl bc = i.GetChild(j).gameObject.GetComponent<BlockControl>();
+                if(bc != null)
+                    bc.ListChildBlock.Clear();
+                DestroyImmediate(i.GetChild(j).gameObject);
+            }
+        }
+        gamePlayManger.SetPause(false);
+        gamePlayUiManager.SetSetting(false);
     }
 }

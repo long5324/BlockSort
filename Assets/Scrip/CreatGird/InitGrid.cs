@@ -1,4 +1,5 @@
 ﻿using DG.Tweening.Core.Easing;
+using Sirenix.OdinInspector;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -21,7 +22,7 @@ public class InitGrid : MonoBehaviour
     GamePlayManager gamePlayManager;
     GameManager gameManager;
     ObjectBoolingControler ObjectBooling;
-    [ContextMenu("Init Grid")]
+    [Button(ButtonSizes.Large)]
     public void StartInitGrid()
     {
         CenterGird.Clear();
@@ -71,7 +72,6 @@ public class InitGrid : MonoBehaviour
         ListblockGround.Clear();
         ChangePositonGround();
     }
-    [ContextMenu("Random")]
     public void RandomSpawn()
     {
         gamePlayManager = GamePlayManager.Instance;
