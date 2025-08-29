@@ -7,7 +7,7 @@ public struct InfoLevel{
     public int NumberInit ;
     public Vector3 DefaultCenter;
     public List<Vector3> CenterGird ;
-    public List<BlockData> ListblockGround ;
+    public List<BlockControl> ListblockGround ;
 }
 [CreateAssetMenu(fileName = "Lever", menuName = "CreatLevel/NewLevel")]
 public class LevelSave : ScriptableObject

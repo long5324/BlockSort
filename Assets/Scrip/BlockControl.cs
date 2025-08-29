@@ -32,8 +32,6 @@ public class BlockControl : MonoBehaviour
 
         return last.CurrenColor;
     }
-    
-
     public int GetNumberSameColor()
     {
         // Nếu list rỗng thì trả về 0
@@ -90,9 +88,7 @@ public class BlockControl : MonoBehaviour
        
         foreach (var i in BlockLink)
         {
-            if (i != null &&
-     CheckColor() == i.CheckColor() &&
-     i.CheckColor() != BlockColor.None)
+            if (i != null &&CheckColor() == i.CheckColor() && i.CheckColor() != BlockColor.None)
             {
                 ListBlock.Add(i);
             }

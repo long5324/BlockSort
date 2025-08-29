@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using DG.Tweening.Core.Easing;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -7,15 +8,19 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SocialPlatforms;
 
-public class InitGrid : Singleton<InitGrid>
+public class InitGrid : MonoBehaviour 
 {
     public float  sizeGrid = 1;
     public int NumberInit = 4;
+    public int numberRandom = 6;
     public Vector3 DefaultCenter = new Vector3(5.5f, -5, 1);
     public bool DrawGrid=false ;
     [SerializeField] List<Vector3> CenterGird = new List<Vector3>();
-    public  List<BlockData> ListblockGround  = new List<BlockData>();
+    public  List<BlockControl> ListblockGround  = new List<BlockControl>();
     public LevelSave NewLevel;
+    GamePlayManager gamePlayManager;
+    GameManager gameManager;
+    ObjectBoolingControler ObjectBooling;
     [ContextMenu("Init Grid")]
     public void StartInitGrid()
     {
@@ -57,26 +62,100 @@ public class InitGrid : Singleton<InitGrid>
         }
         SetupBlock();
     }
+    private void Start()
+    {
+        RandomSpawn();
+    }
     public void SetupBlock()
     {
         ListblockGround.Clear();
         ChangePositonGround();
     }
+    [ContextMenu("Random")]
+    public void RandomSpawn()
+    {
+        gamePlayManager = GamePlayManager.Instance;
+        gameManager = GameManager.Instance;
+        ObjectBooling = ObjectBoolingControler.Instance;
+
+        // 🔥 Lấy danh sách 2 block cha random từ con của object này
+        List<Transform> pickedChildren = GetRandomChildren(transform, 2);
+
+        for (int i = 0; i < pickedChildren.Count; i++)
+        {
+            BlockControl block = pickedChildren[i].GetComponent<BlockControl>();
+            if (block == null) continue;
+
+            // Random màu cho block
+            int colorIndex = Random.Range(0, 7);
+            BlockColor color = gameManager.BlockData.DataBases[colorIndex].BlockColor;
+
+            // Random số lượng block con (ví dụ 2–6 con trong block)
+            int countBlock = Random.Range(2, 7);
+
+            // Lấy từ ObjectPooling
+            List<Transform> ObjectGame = ObjectBooling.getObjectChile(color, countBlock);
+
+            for (int j = 0; j < countBlock; j++)
+            {
+                if (j < ObjectGame.Count)
+                {
+                    ObjectGame[j].gameObject.SetActive(true);
+                    ObjectGame[j].transform.SetParent(block.transform);
+                    ObjectGame[j].transform.localRotation = Quaternion.identity;
+                    ObjectGame[j].transform.localPosition = new Vector3(0, gamePlayManager.sizeYBlock * (j+1), 0);
+                    ObjectGame[j].transform.localScale = new Vector3(0.9f,0.9f,0.9f);
+
+                    // lưu vào danh sách con của block
+                    block.ListChildBlock.Add(ObjectGame[j].GetComponent<ChildBlock>());
+                }
+            }
+
+            // Nếu có ObjectSet thì cập nhật
+            ObjectSet set = block.GetComponent<ObjectSet>();
+            if (set != null)
+                set.AddLisst();
+        }
+    }
+
+
+    List<Transform> GetRandomChildren(Transform parent, int amount)
+    {
+        List<Transform> children = new List<Transform>();
+        foreach (Transform child in parent)
+            children.Add(child);
+
+        List<Transform> picked = new List<Transform>();
+
+        for (int i = 0; i < amount && children.Count > 0; i++)
+        {
+            int index = Random.Range(0, children.Count);
+            picked.Add(children[index]);   // 🟢 Tham chiếu gốc
+            children.RemoveAt(index);      // tránh trùng
+        }
+
+        return picked;
+    }
+
     void ChangePositonGround()
     {
         ListblockGround.Clear();  // reset list trước
+        List<Vector3> usedPositions = new List<Vector3>(); // danh sách vị trí đã dùng
 
         foreach (Transform i in transform)
         {
             Vector3 local = i.localPosition;
-            float Distance = DistanceXZ(local, CenterGird[0]);
-            Vector3 newPosition = CenterGird[0];
+            float Distance = float.MaxValue;
+            Vector3 newPosition = local;
 
             foreach (var j in CenterGird)
             {
-                if (Vector3.Distance(j, local) < Distance)
+                if (usedPositions.Contains(j)) continue; // nếu đã có block ở vị trí này, bỏ qua
+
+                float d = DistanceXZ(j, local);
+                if (d < Distance)
                 {
-                    Distance = DistanceXZ(j, local);
+                    Distance = d;
                     newPosition = j;
                 }
             }
@@ -89,10 +168,10 @@ public class InitGrid : Singleton<InitGrid>
                 bcComponent.PosionBlock = i.localPosition;
                 bcComponent.ClearLink();
 
-                // Thêm bản sao dữ liệu vào list
-                BlockData bcData = new BlockData(bcComponent);
-                ListblockGround.Add(bcData);
+                ListblockGround.Add(bcComponent);
             }
+
+            usedPositions.Add(newPosition); // đánh dấu vị trí đã được sử dụng
         }
 
         // nếu cần remove cái cuối thì dùng ListBlockData
@@ -101,6 +180,7 @@ public class InitGrid : Singleton<InitGrid>
 
         LinkGroud();
     }
+
     [ContextMenu("SaveLevel")]
     public void SaveLevel()
     {
@@ -112,7 +192,7 @@ public class InitGrid : Singleton<InitGrid>
         NewLevel.Database.CenterGird = new List<Vector3>(CenterGird);
 
         // Tạo bản sao BlockData (không lưu BlockControl trực tiếp)
-        List<BlockData> blockDataList = new List<BlockData>();
+        List<BlockControl> blockDataList = new List<BlockControl>();
         foreach (var bc in ListblockGround)
         {
             blockDataList.Add(bc); 

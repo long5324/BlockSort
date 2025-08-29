@@ -48,7 +48,7 @@ public class LoadLevel : MonoBehaviour
 
             Transform child = transform.GetChild(i);
             BlockControl block = child.GetComponent<BlockControl>();
-            BlockData data = OpenLevel.Database.ListblockGround[i]; // dữ liệu thuần
+            BlockControl data = OpenLevel.Database.ListblockGround[i]; // dữ liệu thuần
 
             if (block != null && data != null)
             {

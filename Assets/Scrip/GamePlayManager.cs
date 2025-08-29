@@ -9,8 +9,8 @@ public class GamePlayManager : Singleton<GamePlayManager>
     public List<GameObject> ListBlockGamePlay;
     [SerializeField] public float sizeYBlock { get; set; } = 0.003f;
     [SerializeField] public float MunberBlock = 11;
-    InitGrid initGrid;
     public List<BlockControl> BottomBlock ;
+    public GameObject MapGamePlay;
     Camera cam;
     ObjectSet selectedBlock;
     public BlockControl TagertBlock { get; set; }
@@ -30,26 +30,30 @@ public class GamePlayManager : Singleton<GamePlayManager>
     public List<BlockControl> DelayCheck = new List<BlockControl>();
     private void Start()
     {
-        initGrid = InitGrid.Instance;
         animationControl = AnimationControl.Instance;
         ObjectBooling = ObjectBoolingControler.Instance;
         gameManager = GameManager.Instance;
         Application.targetFrameRate = 60;
         AdjustScaleToScreen();
         cam = Camera.main;
-        foreach (var i in ListBlockGamePlay)
-        {
-            ListDefaulPossitionBlockGamePlay.Add(i.transform.position);
-        }
-        foreach(Transform i in transform)
-        {
-            BottomBlock.Add(i.GetComponent<BlockControl>());
-        }
-      
+        SetUpChangeLevel();
+        RandomSpawnBlockChild();
        
         /* setPause(true);
          setActiveListGamePlay(false);
          SetStartBlockPlay();*/
+    }
+    public void SetUpChangeLevel()
+    {
+        ListDefaulPossitionBlockGamePlay.Clear(); BottomBlock.Clear();  
+        foreach (var i in ListBlockGamePlay)
+        {
+            ListDefaulPossitionBlockGamePlay.Add(i.transform.position);
+        }
+        foreach (Transform i in MapGamePlay.transform)
+        {
+            BottomBlock.Add(i.GetComponent<BlockControl>());
+        }
     }
     private void Update()
     {
@@ -66,13 +70,14 @@ public class GamePlayManager : Singleton<GamePlayManager>
             SetAllDefaut();
             EndClicK();
         }
-        if (CheckLose() && animationControl.ListAni.Count == 0)
+        if (CheckLose() && animationControl.Ani == null)
         {
             SaveScore(CurrenScore);
           //  uiManager.Losegame();
         }
-        if(!animationControl.IsRun &&animationControl.ListAni.Count == 0 && DelayCheck.Count >0)
+        if(!animationControl.IsRun &&animationControl.Ani.BlockStart==null && DelayCheck.Count >0)
         {
+            Debug.Log("Run Delay Check");
             CheckFirt(DelayCheck[0]);
             DelayCheck.RemoveAt(0);
         }
@@ -220,18 +225,16 @@ public class GamePlayManager : Singleton<GamePlayManager>
 
     public void CheckFirt(BlockControl P)
     {
-        
+        if(P== null) return;    
         List<BlockControl> ListBlock = P.CheckArow();
         if(ListBlock == null || ListBlock.Count == 0) return;
-        if (ListBlock.Count == 1) {
-            animationControl.AddAni(P,ListBlock[0], P.GetNumberSameColor()); 
-        }else if (ListBlock.Count > 1)
+        if(ListBlock.Count ==1)
+        animationControl.AddAni(ListBlock[0], P);
+        else if(ListBlock.Count > 1)
         {
-            foreach (var i in ListBlock)
-            {
-                animationControl.AddAni(i,P , i.GetNumberSameColor()); 
-            }
-        } 
+            animationControl.AddAni(P,ListBlock[0]);
+        }
+
     }
     public void setPause(bool b)
     {
@@ -269,11 +272,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     }
     void Sortspecifically(BlockControl start, BlockControl end)
     {
-
-        
     }
-
-
     void EndClicK()
     {
 
@@ -354,9 +353,10 @@ public class GamePlayManager : Singleton<GamePlayManager>
                     if (k < ObjectGame.Count)
                     {
                         ObjectGame[k].gameObject.SetActive(true); 
-                        ObjectGame[k].transform.SetParent(i.transform); 
+                        ObjectGame[k].transform.SetParent(i.transform);
+                        ObjectGame[k].transform.localRotation = Quaternion.identity;
                         ObjectGame[k].transform.localPosition = new Vector3(0, sizeYBlock * i.transform.childCount, 0);  
-                        ObjectGame[k].transform.localScale = new Vector3(1, 1, 1); 
+                        ObjectGame[k].transform.localScale = Vector3.one; 
                     }
                 }
             }

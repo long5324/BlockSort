@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
 
-public class UIManager : Singleton<UIManager>
+public class UIManager 
 {
     [Header("text")]
     [SerializeField] TextMeshProUGUI CurrenScore;

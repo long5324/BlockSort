@@ -26,7 +26,6 @@ public class ObjectBoolingControler : Singleton<ObjectBoolingControler> {
         InitObjectBooling();
         SpawnBlockChid(NumberBlockInit);
     }
-
     public void InitObjectBooling()
     {
         foreach (var i in gameManager.BlockData.DataBases)

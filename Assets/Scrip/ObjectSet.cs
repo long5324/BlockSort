@@ -8,7 +8,9 @@ public class ObjectSet : MonoBehaviour
     {
         foreach(Transform i in transform)
         {
-            ListChildBlock.Add(i.GetComponent<ChildBlock>());
+            ChildBlock bc = i.GetComponent<ChildBlock>();
+            if(bc!=null)
+            ListChildBlock.Add(bc);
         }
     }
 }
