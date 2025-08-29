@@ -165,6 +165,7 @@ public class GameManager : Singleton<GameManager>
     public void Winlevel()
     {
         gamePlayUiManager.SetWinUI(true);
+        gamePlayUiManager.SetGamePlayUi(false);
         gamePlayManger. pausegame = true;
     }
     public void NextLevel()

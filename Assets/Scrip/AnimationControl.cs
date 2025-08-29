@@ -130,14 +130,14 @@ public class AnimationControl : Singleton<AnimationControl>
         }
 
         // check Ani
-        if (Ani == null || Ani.BlockStart == null)
+        if (Ani.BlockStart == null)
         {
             return;
         }
 
         foreach (var i in gamePlayManager.BottomBlock)
         {
-            if (Ani.BlockStart || i == Ani.BlockEnd)
+            if (Ani.BlockStart == i || i == Ani.BlockEnd)
             {
                 i.ListChildBlock.Clear();
 

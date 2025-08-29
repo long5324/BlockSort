@@ -6,11 +6,9 @@ using System.Linq;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEditor;
-using UnityEditor.Search;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static ObjectBoolingControler;
-using static Unity.VisualScripting.Metadata;
 
 public class Animation : Singleton<Animation>
 {
@@ -138,13 +136,9 @@ public class Animation : Singleton<Animation>
 
             control.ChangeInDataBlockControl();
         BlockControl BlockStart = control.Ani.BlockStart;
-          BlockControl BlockEnd = control.Ani.BlockEnd;
+         BlockControl BlockEnd = control.Ani.BlockEnd;
         control.IsRun = false;
         control.EndAnimation();
-                foreach(BlockControl i in gamePlayManager.BottomBlock)
-        {
-            i.UpdateList();
-        }
         StartCoroutine(DelayCheck(BlockStart,0.1f));
         StartCoroutine(DelayCheck(BlockEnd, 0.1f));
     }
@@ -218,10 +212,6 @@ public class Animation : Singleton<Animation>
         if (gamePlayManager.CurrenScore > gameManager.MaxCurrenScore)
         {
             gameManager.Winlevel();
-        }
-        foreach(BlockControl i in gamePlayManager.BottomBlock)
-        {
-            i.UpdateList();
         }
         StartCoroutine(DelayCheck(block, 0.1f));
         control.ScorePlus = false;

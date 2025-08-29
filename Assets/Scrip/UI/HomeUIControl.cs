@@ -46,7 +46,7 @@ public class HomeUIControl : Singleton<HomeUIControl>
         foreach(Transform i in CanvaMainHome.transform)
         {
             ListUI.Add(i.GetComponent<CanvasGroup>());
-            i.GetComponent<RectTransform>().DOLocalMove(new Vector3(0,3500,0), 0.5f);
+            i.GetComponent<RectTransform>().DOLocalMove(new Vector3(0,5000,0), 1f);
         }
 
     }
@@ -61,7 +61,7 @@ public class HomeUIControl : Singleton<HomeUIControl>
         foreach (Transform i in CanvaMainHome.transform)
         {
             ListUI.Add(i.GetComponent<CanvasGroup>());
-            i.GetComponent<RectTransform>().DOLocalMove(Vector3.zero, 0.5f);
+            i.GetComponent<RectTransform>().DOLocalMove(Vector3.zero, 1f);
            
         }
     }
