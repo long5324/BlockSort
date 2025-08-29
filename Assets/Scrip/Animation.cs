@@ -141,6 +141,10 @@ public class Animation : Singleton<Animation>
           BlockControl BlockEnd = control.Ani.BlockEnd;
         control.IsRun = false;
         control.EndAnimation();
+                foreach(BlockControl i in gamePlayManager.BottomBlock)
+        {
+            i.UpdateList();
+        }
         StartCoroutine(DelayCheck(BlockStart,0.1f));
         StartCoroutine(DelayCheck(BlockEnd, 0.1f));
     }
@@ -181,9 +185,9 @@ public class Animation : Singleton<Animation>
             .SetEase(Ease.InOutSine);  
     }
 
-    public IEnumerator WaitBack(List<Transform> children, float time)
+
+    public void WaitBack(List<Transform> children)
     {
-        yield return new WaitForSeconds(time);
         Booling.ObjectBack(children);
     }
     public IEnumerator PlusScore(BlockControl block, int score, float delay)
@@ -191,7 +195,6 @@ public class Animation : Singleton<Animation>
         gamePlayManager.StartScaleScore = false;
         block.ListChildBlock.RemoveRange(0, score);
         yield return new WaitForSeconds(delay);
-
         List<Transform> children = new List<Transform>();
 
         for (int i = block.transform.childCount - 1; i >= block.transform.childCount - score; i--)
@@ -208,52 +211,19 @@ public class Animation : Singleton<Animation>
 
         }
         gamePlayManager.CurrenScore += children.Count;
-        StartCoroutine(DelayCheck(block, 0.1f));
         uiManagerUi.Setfill(gamePlayManager.CurrenScore, gameManager.MaxCurrenScore);
         uiManagerUi.ChangeScore(gamePlayManager.CurrenScore.ToString()+"/"+ gameManager.MaxCurrenScore.ToString());
         // Khi vòng lặp xong, các bước tiếp theo chạy
-        StartCoroutine(WaitBack(children, 0.1f * children.Count));
+        WaitBack(children);
         if (gamePlayManager.CurrenScore > gameManager.MaxCurrenScore)
         {
             gameManager.Winlevel();
         }
-       
-        gamePlayManager.DelayCheck.Add(block);
-/*          IEnumerator DelayCheck(BlockControl BlockList, float Time)
-    {
-        yield return new WaitForSeconds(Time);
-        gamePlayManager.CheckFirt(BlockList);
-
-    }
-        TransformText.DOAnchorPos(new Vector2(400, 520), 0.3f)
-            .SetEase(Ease.OutBack)
-            .OnComplete(() =>
-            {
-                uiManager.SetTextScale("+" + (gamePlayManager.ScorePluss * ((gamePlayManager.CountScaleScore / 5) + 1)).ToString());
-                DOTween.To(() => textSale.fontSize,
-                    x => textSale.fontSize = x,
-                    30, 0.2f)
-                    .OnComplete(() =>
-                    {
-                        TransformText.DOAnchorPos(new Vector2(400, 600), 0.2f)
-                            .SetEase(Ease.OutBack)
-                            .OnComplete(() =>
-                            {
-                              
-                                TransformText.DOKill();
-                                DOTween.Kill(textSale);
-
-                                uiManager.SetActiveTextScale(false);
-
-                               
-                                TransformText.anchoredPosition = startPos;
-                                textSale.fontSize = startFontSize;
-
-                                gamePlayManager.UpdateScore();
-                            });
-                    });
-            });*/
+        foreach(BlockControl i in gamePlayManager.BottomBlock)
+        {
+            i.UpdateList();
+        }
+        StartCoroutine(DelayCheck(block, 0.1f));
         control.ScorePlus = false;
-       
     }
 }

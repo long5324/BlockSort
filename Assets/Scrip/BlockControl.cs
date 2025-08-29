@@ -53,6 +53,15 @@ public class BlockControl : MonoBehaviour
 
         return count;
     }
+    public void UpdateList()
+    {
+        if (transform.childCount == 0) { ListChildBlock.Clear(); return; }
+        ListChildBlock.Clear();
+         foreach (Transform i in transform)
+        {
+            ListChildBlock.Add(i.GetComponent<ChildBlock>());
+        }
+    }
     public void CopyDataFrom(BlockControl other)
     {
         transform.localPosition = other.transform.localPosition;

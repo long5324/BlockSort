@@ -84,7 +84,7 @@ public class AnimationControl : Singleton<AnimationControl>
     private void HandleScore()
     {
         if (gamePlayManager.BottomBlock == null || gamePlayManager.BottomBlock.Count == 0) return;
-
+        Debug.Log(0);
         foreach (var block in gamePlayManager.BottomBlock)
         {
             if (block.ListChildBlock.Count < gamePlayManager.MunberBlock || gamePlayManager.CheckScore(block) < gamePlayManager.MunberBlock)
@@ -93,6 +93,7 @@ public class AnimationControl : Singleton<AnimationControl>
             int score = gamePlayManager.CheckScore(block);
             if (score > 0)
             {
+                Debug.Log(1);
                 gamePlayManager.ScorePluss += score;
                 StartCoroutine(animation.PlusScore(block, score, 0));
                 ScorePlus = true;

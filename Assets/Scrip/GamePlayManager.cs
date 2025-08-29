@@ -15,7 +15,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     ObjectSet selectedBlock;
     public BlockControl TagertBlock { get; set; }
     UIManager uiManager;
-    List<Vector3> ListDefaulPossitionBlockGamePlay = new List<Vector3>();
+    public List<Vector3> ListDefaulPossitionBlockGamePlay { get; set; } = new List<Vector3>();
     AnimationControl animationControl;
     public int CountScaleScore { get; set; } = 0;
     public bool StartScaleScore { get; set; } = false;
@@ -37,9 +37,6 @@ public class GamePlayManager : Singleton<GamePlayManager>
         Application.targetFrameRate = 60;
         AdjustScaleToScreen();
         cam = Camera.main;
-        SetUpChangeLevel();
-        RandomSpawnBlockChild();
-       
         /* setPause(true);
          setActiveListGamePlay(false);
          SetStartBlockPlay();*/
@@ -281,7 +278,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     }
     void EndClicK()
     {
-
+        if(selectedBlock == null) { return; }
         if (TagertBlock == null)
             for (int i = 0; i < ListBlockGamePlay.Count; i++)
             {
@@ -322,30 +319,6 @@ public class GamePlayManager : Singleton<GamePlayManager>
         selectedBlock.ListChildBlock.Clear();
         CheckGamePlay();
        
-    }
-    void SetStartBlockPlay()
-    {
-        foreach (var i in ListBlockGamePlay)
-        {
-            for (int j = 0; j < i.transform.childCount; j++)
-            {
-                Vector3 pos = i.transform.GetChild(j).transform.position;
-                i.transform.GetChild(j).transform.position = new Vector3(pos.x, pos.y + 4, pos.z);
-            }
-        }
-    }
-    public void ResetGameplay()
-    {
-        foreach(var i in ListBlockGamePlay)
-        {
-            for (int j = i.transform.childCount - 1; j >= 0; j--)
-            {
-                DestroyImmediate(i.transform.GetChild(j).gameObject);
-                ObjectSet OS = i.transform.GetChild(j).gameObject.GetComponent<ObjectSet>();
-                OS = new ObjectSet();
-            }
-        }
-        RandomSpawnBlockChild();
     }
     public void RandomSpawnBlockChild()
     {

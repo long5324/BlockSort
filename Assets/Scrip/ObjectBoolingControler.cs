@@ -122,20 +122,30 @@ public class ObjectBoolingControler : Singleton<ObjectBoolingControler> {
     }
     public void ObjectBack(List<Transform> List)
     {
-        if(List.Count ==0 )    return;
+        if (List == null || List.Count == 0) return;
+
+        // Bỏ hết phần tử null (đã bị Destroy)
+        List.RemoveAll(item => item == null);
+
+        if (List.Count == 0) return;
+
+        // Tìm container đúng màu
         foreach (Transform container in transform)
         {
             if (container.gameObject.name == List[0].GetComponent<ChildBlock>().CurrenColor.ToString())
             {
                 foreach (var obj in List)
                 {
+                    if (obj == null) continue; // an toàn hơn nữa
+
                     obj.gameObject.SetActive(false);
-                    obj.SetParent(container);
+                    obj.SetParent(container, true);
                 }
                 break;
             }
         }
 
+        // Cập nhật dữ liệu BoolingData
         BlockColor color = List[0].GetComponent<ChildBlock>().CurrenColor;
         foreach (var data in BoolingData)
         {

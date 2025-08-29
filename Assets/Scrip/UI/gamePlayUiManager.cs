@@ -25,30 +25,53 @@ public class gamePlayUiManager : Singleton<gamePlayUiManager>
     {
         FillSocre.fillAmount = currenScore / MaxScore;
     }
-    public void SetWinUI(bool t)
+    public void SetGamePlayUi(bool b)
     {
-        foreach (var i in WinUI)
+        foreach(var i in GamePlayUI)
         {
-            if (t)
+            if (b)
             {
                 i.alpha = 1;
                 i.interactable = true;
                 i.blocksRaycasts = true;
-            }else
+            }
+            
+            else{ i.alpha = 0;
+                i.interactable = false;
+                i.blocksRaycasts = false;
+            }
+            }
+    }
+    public void SetSettingUi(bool b)
+    {
+        foreach (var i in SettingUi)
+        {
+            if (b)
+            {
+                i.alpha = 1;
+                i.interactable = true;
+                i.blocksRaycasts = true;
+            }
+
+            else
             {
                 i.alpha = 0;
                 i.interactable = false;
                 i.blocksRaycasts = false;
             }
         }
-        foreach (var i in GamePlayUI)
+    }
+    public void SetWinUI(bool b)
+    {
+        foreach (var i in WinUI)
         {
-            if (!t)
+            if (b)
             {
                 i.alpha = 1;
                 i.interactable = true;
                 i.blocksRaycasts = true;
             }
+
             else
             {
                 i.alpha = 0;

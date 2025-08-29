@@ -1,4 +1,5 @@
 ﻿using DG.Tweening;
+using DG.Tweening.Core.Easing;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -12,9 +13,14 @@ public class HomeUIControl : Singleton<HomeUIControl>
     private List<RectTransform> ListLevel = new List<RectTransform>();
     public GameObject CanvaMainHome;
     public TextMeshProUGUI TextLevelGame;
-
+    GamePlayManager gamePlayManager;
+    gamePlayUiManager gameUI;
+    GameManager gameManager;
     private void Start()
     {
+        gamePlayManager = GamePlayManager.Instance;
+        gameManager = GameManager.Instance;
+        gameUI = gamePlayUiManager.Instance;    
         foreach (Transform i in LevelGameP.transform)
         {
             ListLevel.Add(i.GetComponent<RectTransform>());
@@ -44,6 +50,22 @@ public class HomeUIControl : Singleton<HomeUIControl>
         }
 
     }
+    public void BackToHome()
+    {
+        gameUI.SetGamePlayUi(false);
+        gameUI.SetSettingUi(false);
+        gameUI.SetWinUI(false);
+        gameManager.DestroyLever();
+        gamePlayManager.SetPause(false);
+        List<CanvasGroup> ListUI = new List<CanvasGroup>();
+        foreach (Transform i in CanvaMainHome.transform)
+        {
+            ListUI.Add(i.GetComponent<CanvasGroup>());
+            i.GetComponent<RectTransform>().DOLocalMove(Vector3.zero, 0.5f);
+           
+        }
+    }
+
     IEnumerator WaitOffUI(List<CanvasGroup> ListUI)
     {
         yield return new WaitForSeconds(1);
