@@ -232,6 +232,64 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &93447303
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 93447305}
+  - component: {fileID: 93447304}
+  m_Layer: 0
+  m_Name: LeanPool (ChildBlock)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &93447304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 93447303}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eea08375da243a441b88d1e6b0713006, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  prefab: {fileID: 308420011957886170, guid: cdcbe9cee5a7bb448a8cb3e65a1bd292, type: 3}
+  notification: 3
+  strategy: 0
+  preload: 0
+  capacity: 0
+  recycle: 0
+  persist: 0
+  stamp: 0
+  warnings: 1
+  spawnedClonesList:
+  - {fileID: 0}
+  despawnedClones: []
+  delays: []
+  deactivatedChild: {fileID: 0}
+--- !u!4 &93447305
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 93447303}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -349,7 +407,7 @@ MonoBehaviour:
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
   m_RenderPostProcessing: 1
-  m_Antialiasing: 0
+  m_Antialiasing: 1
   m_AntialiasingQuality: 2
   m_StopNaN: 0
   m_Dithering: 0
@@ -369,50 +427,6 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
---- !u!1 &403309641
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 403309642}
-  - component: {fileID: 403309643}
-  m_Layer: 0
-  m_Name: ObjectBooling
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &403309642
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 403309641}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.43705, y: -4.94, z: -2.22556}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &403309643
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 403309641}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bf03e880a9380514094c6b2209e7b737, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ObjectBoolingControler
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -1312,7 +1326,7 @@ MonoBehaviour:
     GameObjectLevel: {fileID: 8648851511169170895, guid: 45cc982e3553c834297c4aeb4c5cfc4a, type: 3}
     ScoreMax: 70
   CurrenLevel: {fileID: 0}
-  LeverGame: {fileID: 543824218}
+  LevelGame: {fileID: 543824218}
   BlockData: {fileID: 11400000, guid: 63cf925fbdcae274cad529fd505283ff, type: 2}
   GamePlay: {fileID: 3973784379412956517, guid: f974e9edeb47fe34595e238c62a8d3b8, type: 3}
 --- !u!4 &1892687473
@@ -1480,6 +1494,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8587d13489379c44391f2a4135e5eabc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GamePlayManager
+  LightMaterial: {fileID: 2100000, guid: 13dbd584ae49ad24583fd351af9f197d, type: 2}
   MunberBlockEat: 11
   MapGamePlay: {fileID: 0}
   DataBlockChild: {fileID: 11400000, guid: 63cf925fbdcae274cad529fd505283ff, type: 2}
@@ -1625,6 +1640,6 @@ SceneRoots:
   - {fileID: 698679892}
   - {fileID: 1845408505}
   - {fileID: 25940526}
-  - {fileID: 403309642}
   - {fileID: 1371615552}
   - {fileID: 85702795}
+  - {fileID: 93447305}

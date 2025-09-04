@@ -19,44 +19,19 @@ public enum BlockColor
     CheckBottomColor,
     DefautColor
 }
-[System.Serializable] 
-
+[Serializable]
+public struct BlockData
+{
+    public BlockColor Color;
+    public Material BlockMaterial;
+}
 [CreateAssetMenu(fileName = "BlockData", menuName = "Data/BlockData")]
 public class Block : ScriptableObject
 {
-    public GameObject ObjectBoolingControl;
-    public List<ChildBlock> DataBases = new List<ChildBlock>();
-    public GameObject GetBlockChild(BlockColor Color)
-    {
-        GameObject ObjectR = null;
-
-        foreach (ChildBlock b in DataBases)
-        {
-            if (b.CurrenColor == Color)
-            {
-                ObjectR = LeanPool.Spawn(b.gameObject);
-                ObjectR.transform.SetParent(ObjectBoolingControl.transform);
-                break;
-            }
-        }
-        return ObjectR;
-    }
-    public GameObject SpawnBlockNotBool(BlockColor Color)
-    {
-        GameObject ObjectR = null;
-
-        foreach (ChildBlock b in DataBases)
-        {
-            if (b.CurrenColor == Color)
-            {
-                ObjectR = Instantiate(b.gameObject);
-            
-                break;
-            }
-        }
-        return ObjectR;
-    }
-    public Material GetMaterial(BlockColor Color)
+    public List<BlockData> BlockDataBase = new List<BlockData>();
+    public ChildBlock BlockPrefab;
+  
+/*    public Material GetMaterial(BlockColor Color)
     {
         foreach (var i in DataBases)
         {
@@ -68,5 +43,5 @@ public class Block : ScriptableObject
         return null;
     }
 
-
+*/
 }

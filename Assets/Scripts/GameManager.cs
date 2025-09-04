@@ -32,7 +32,6 @@ public class GameManager : Singleton<GameManager>
     private void Start()
     {
         Data = DataInport.Ins;
-     
         MaxCurrenScore = ListGameLever[0].ScoreMax;
         UIManager.Ins.OpenUI<HomeUI>();
     }
@@ -157,7 +156,36 @@ public class GameManager : Singleton<GameManager>
 
         GamePlayManager.Ins.RandomSpawnBlockChild();
     }
+    public ChildBlock SpawnBlockChild(BlockColor Color)
+    {
+        ChildBlock ObjectR = null;
 
+        foreach (BlockData i in BlockData.BlockDataBase)
+        {
+            if (i.Color == Color)
+            {
+                ObjectR = LeanPool.Spawn(BlockData.BlockPrefab);
+                ObjectR.Configure(i);
+                break;
+            }
+        }
+        return ObjectR;
+    }
+    public ChildBlock SpawnBlockNotBool(BlockColor Color)
+    {
+        ChildBlock ObjectR = null;
+
+        foreach (BlockData b in BlockData.BlockDataBase)
+        {
+            if (b.Color == Color)
+            {
+                ObjectR = Instantiate(BlockData.BlockPrefab);
+                ObjectR.Configure(b);
+                break;
+            }
+        }
+        return ObjectR;
+    }
     public void DestroyLever()
     {
         foreach (Transform child in LevelGame.transform)

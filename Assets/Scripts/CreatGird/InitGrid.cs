@@ -118,13 +118,13 @@ public class InitGrid : MonoBehaviour
             BlockControl block = pickedChildren[i].GetComponent<BlockControl>();
             if (block == null) continue;
             int colorIndex = Random.Range(0, 7);
-            BlockColor color = gameManager.BlockData.DataBases[colorIndex].CurrenColor;
+            BlockColor color = gameManager.BlockData.BlockDataBase[colorIndex].Color;
 
             int countBlock = Random.Range(2, 7);
             List<Transform> ObjectGame = new List<Transform>();
             for (int j = 0; j < countBlock; j++)
             {
-                ObjectGame.Add(gamePlayManager.DataBlockChild.SpawnBlockNotBool(color).transform);
+                ObjectGame.Add(GameManager.Ins.SpawnBlockChild(color).transform);
 
             }
 

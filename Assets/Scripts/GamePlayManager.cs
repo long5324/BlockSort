@@ -7,6 +7,7 @@ using static UnityEngine.GraphicsBuffer;
 
 public class GamePlayManager : Singleton<GamePlayManager>
 {
+    public Material LightMaterial;
     public List<BlockControl> BottomBlock { get; set; }
     public List<GameObject> ListBlockGamePlay { get; set; }
     public List<Vector3> ListDefaulPossitionBlockGamePlay { get; set; } = new List<Vector3>();
@@ -27,6 +28,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     private float referenceHeight = 2280f;
     private bool pause = false;
     DataInport Data;
+    
     private void Start()
     {
         Data = DataInport.Ins;
@@ -129,41 +131,47 @@ public class GamePlayManager : Singleton<GamePlayManager>
 
             if (TagertBlock != null)
             {
-                TagertBlock.SetColor(Data.gameManager.BlockData.GetMaterial(BlockColor.CheckBottomColor));
+                TagertBlock.SetColor(LightMaterial);
             }
 
-            if ( bottomBlockControl != null && bottomBlockControl.CompareTag("BottomBlock"))
+
+            if (bottomBlockControl != null && bottomBlockControl.CompareTag("BottomBlock"))
             {
-                if (Data.gameManager.BlockData.DataBases != null && Data.gameManager.BlockData.DataBases.Count > 1)
+
+                TagertBlock = bottomBlockControl;
+
+                if (bottomBlockControl.transform.childCount > 0)
                 {
-                    TagertBlock = bottomBlockControl;
+                    TagertBlock = null;
+                }
 
-                    if (bottomBlockControl.transform.childCount > 0)
+                if (previousBlock != null && previousBlock != bottomBlockObject)
+                {
+                    BlockControl previousBlockControl = previousBlock.GetComponent<BlockControl>();
+                    if (previousBlockControl != null)
                     {
-                        TagertBlock = null;
+
+                        previousBlockControl.BacktoDFColor();
                     }
 
-                    if (previousBlock != null && previousBlock != bottomBlockObject)
-                    {
-                        BlockControl previousBlockControl = previousBlock.GetComponent<BlockControl>();
-                        if (previousBlockControl != null)
-                        {
-                            Material defaultMaterial = Data.gameManager.BlockData.GetMaterial(BlockColor.DefautColor);
-                            previousBlockControl.GetComponent<Renderer>().material = defaultMaterial;
-                        }
-                    }
 
                     previousBlock = bottomBlockObject;
                 }
             }
-        
+
             else if (bottomBlockControl == null && TagertBlock != null)
             {
-               TagertBlock.SetColor(Data.gameManager.BlockData.GetMaterial(BlockColor.DefautColor));
-                TagertBlock = null; 
+                TagertBlock.BacktoDFColor();
+                TagertBlock = null;
+            }
+            foreach(var i in BottomBlock)
+            {
+                if(i != TagertBlock)
+                {
+                    i.BacktoDFColor();
+                }
             }
 
-         
             Vector3 targetPos = hit.point ;
             targetPos.y = hit.point.y + 2f;
             selectedBlock.transform.position = targetPos;
@@ -178,8 +186,8 @@ public class GamePlayManager : Singleton<GamePlayManager>
                 BlockControl previousBlockControl = previousBlock.GetComponent<BlockControl>();
                 if (previousBlockControl != null)
                 {
-                    Material defaultMaterial = DataBlockChild.GetMaterial(BlockColor.DefautColor);
-                    previousBlockControl.GetComponent<Renderer>().material = defaultMaterial;
+                 
+                    previousBlockControl.BacktoDFColor();
                 }
 
                 previousBlock = null;
@@ -214,7 +222,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     void SetAllDefaut()
     {
         if (TagertBlock == null) return;
-        TagertBlock.GetComponent<BlockControl>().SetColor(Data.gameManager.BlockData.GetMaterial(BlockColor.DefautColor));
+        TagertBlock.GetComponent<BlockControl>().BacktoDFColor();
     }
 
     public void CheckFirt(Vector3 Po)
@@ -308,12 +316,13 @@ public class GamePlayManager : Singleton<GamePlayManager>
             {
                 if (BlockE <= 0) break;
                 int currentBlock = Random.Range(1, BlockE + 1);  
-                BlockE -= currentBlock; 
-                BlockColor color = Data.gameManager.BlockData.DataBases[ColorBlock[j]].CurrenColor;
+                BlockE -= currentBlock;
+
+                BlockColor color = Data.gameManager.BlockData.BlockDataBase[ColorBlock[j]].Color;
                 List<Transform> ObjectGame = new List<Transform>();
                 for (int k = 0; k < countBlock; k++)
                 {
-                    ObjectGame.Add(DataBlockChild.GetBlockChild(color).transform);
+                   ObjectGame.Add(GameManager.Ins.SpawnBlockChild(color).transform);
 
                 }
                 for (int k = 0; k < currentBlock; k++)

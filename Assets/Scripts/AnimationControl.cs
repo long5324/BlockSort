@@ -25,7 +25,7 @@ public class AnimationControl : Singleton<AnimationControl>
     DataInport Data;
     bool StratCheck = false;
     Coroutine CheckSocre = null;
-
+    bool Check = false;
     private void Start()
     {
         Data = DataInport.Ins;
@@ -39,7 +39,7 @@ public class AnimationControl : Singleton<AnimationControl>
             delaysort = true;
         }
         else delaysort = false; 
-        if (Ani.BlockStart!=null && !IsRun && !ScorePlus && !delaysort)
+        if (Ani.BlockStart!=null && !IsRun && !ScorePlus && !delaysort )
         {
             HandleData();
             IsRun = true;
@@ -51,6 +51,7 @@ public class AnimationControl : Singleton<AnimationControl>
         }
         else if (Ani.BlockStart == null && !IsRun && !ScorePlus && CheckSocre == null)
         {
+            Check = false;
             CheckSocre = StartCoroutine(DelayCheckSocre());
         }
 
@@ -58,6 +59,7 @@ public class AnimationControl : Singleton<AnimationControl>
     public IEnumerator DelayCheckSocre()
     {
         yield return new WaitForSeconds(1);
+        IsRun = false;
         HandleScore();
     }
     private void HandleData()

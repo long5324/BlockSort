@@ -20,15 +20,19 @@ public class BlockControl : MonoBehaviour
     public Vector3 PosionBlock ;
     public Renderer Renderer { get; set; }
     [SerializeField] public List< BlockControl >BlockLink = new List<BlockControl> ();
-
+    Material MaterialDF { get; set; }
     private void Start()
     {
         Renderer = GetComponent<Renderer>();
-       
+        MaterialDF = Renderer.material;
     }
     public void SetColor(Material material)
     {
         Renderer.material = material;
+    }
+    public void BacktoDFColor()
+    {
+        Renderer.material = MaterialDF;
     }
     public BlockColor CheckColor()
     {
@@ -89,11 +93,11 @@ public class BlockControl : MonoBehaviour
             for(int j = 0;j < i.NumberSpawm; j++)
             {
                 GamePlayManager gamePlaymanager = GamePlayManager.Ins;
-               GameObject Obj = gamePlaymanager.DataBlockChild.SpawnBlockNotBool(i.Color);
+                ChildBlock Obj = GameManager.Ins.SpawnBlockNotBool(i.Color);
                 Obj.transform.SetParent(transform);
                 Obj.transform.localScale = gamePlaymanager.baseScale;
                 Obj.transform.localPosition = new Vector3(0, gamePlaymanager.sizeYBlock * transform.childCount, 0);
-                ListChildBlock.Add(Obj.GetComponent<ChildBlock>());
+                ListChildBlock.Add(Obj);
 
             }
         }
@@ -115,11 +119,11 @@ public class BlockControl : MonoBehaviour
             for (int j = 0; j < i.NumberSpawm; j++)
             {
                 GamePlayManager gamePlaymanager = GamePlayManager.Ins;
-                GameObject Obj = gamePlaymanager.DataBlockChild.GetBlockChild(i.Color);
+                ChildBlock Obj = GameManager.Ins.SpawnBlockChild(i.Color);
                 Obj.transform.SetParent(transform);
                 Obj.transform.localScale = gamePlaymanager.baseScale;
                 Obj.transform.localPosition = new Vector3(0, gamePlaymanager.sizeYBlock * (j + 1), 0);
-                ListChildBlock.Add(Obj.GetComponent<ChildBlock>());
+                ListChildBlock.Add(Obj);
 
             }
         }
