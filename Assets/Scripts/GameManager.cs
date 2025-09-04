@@ -1,6 +1,7 @@
 ﻿using DG.Tweening;
 using DG.Tweening.Core.Easing;
 using JetBrains.Annotations;
+using Lean.Pool;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -24,7 +25,7 @@ public class GameManager : Singleton<GameManager>
     public List<InfogameLevel> ListGameLever;
     int CurrenNumberLevel = 1;
     public GameObject CurrenLevel;
-    public GameObject LeverGame;
+    public GameObject LevelGame;
     public Block BlockData;
     public GameObject GamePlay;
     DataInport Data;
@@ -55,8 +56,8 @@ public class GameManager : Singleton<GameManager>
                 GameObject GamePlayy = Instantiate(GamePlay, new Vector3(1f, -0.5f, -3.5f), Quaternion.identity);
 
                 // ✅ Đặt parent đúng cách
-                CurrenLevel.transform.SetParent(LeverGame.transform, false);
-                GamePlayy.transform.SetParent(LeverGame.transform, false);
+                CurrenLevel.transform.SetParent(LevelGame.transform, false);
+                GamePlayy.transform.SetParent(LevelGame.transform, false);
                 List<GameObject> ListBlockGamePlay= new List<GameObject>();
                 List<Vector3> DefaulP = new List<Vector3>();
                 foreach (Transform j in GamePlayy.transform)
@@ -102,7 +103,7 @@ public class GameManager : Singleton<GameManager>
     {
         StopAllAnimations();
      
-        foreach (Transform child in LeverGame.transform)
+        foreach (Transform child in LevelGame.transform)
         {
             Destroy(child.gameObject);
         }
@@ -113,8 +114,8 @@ public class GameManager : Singleton<GameManager>
                 CurrenLevel = Instantiate(i.GameObjectLevel, new Vector3(5.5f, -5, 1f), Quaternion.identity);
                 GameObject GamePlayy = Instantiate(GamePlay, new Vector3(1f, -0.5f, -3.5f), Quaternion.identity);
 
-                CurrenLevel.transform.SetParent(LeverGame.transform, false);
-                GamePlayy.transform.SetParent(LeverGame.transform, false);
+                CurrenLevel.transform.SetParent(LevelGame.transform, false);
+                GamePlayy.transform.SetParent(LevelGame.transform, false);
                 List<GameObject> ListBlockGamePlay = new List<GameObject>();
                 List<Vector3> DefaulP = new List<Vector3>();
                 foreach (Transform j in GamePlayy.transform)
@@ -131,11 +132,36 @@ public class GameManager : Singleton<GameManager>
         }
         UpdateScore();
     }
-   public void DestroyLever()
+    public void Rerool()
     {
-        foreach (Transform child in LeverGame.transform)
+        GameObject ObjectGamePlay = LevelGame.transform.GetChild(1).gameObject;
+
+        foreach (Transform i in ObjectGamePlay.transform)
         {
-            Debug.Log(1);
+            ObjectSet OBS = i.GetComponent<ObjectSet>();
+            OBS.ListChildBlock.Clear();
+
+            // ✅ Tạo list tạm để lưu con của i
+            List<GameObject> children = new List<GameObject>();
+            foreach (Transform j in i)
+            {
+                children.Add(j.gameObject);
+            }
+
+            // ✅ Despawn tất cả
+            foreach (var child in children)
+            {
+                LeanPool.Despawn(child);
+            }
+        }
+
+        GamePlayManager.Ins.RandomSpawnBlockChild();
+    }
+
+    public void DestroyLever()
+    {
+        foreach (Transform child in LevelGame.transform)
+        {
             Destroy(child.gameObject);
         }
     }
@@ -151,21 +177,23 @@ public class GameManager : Singleton<GameManager>
             break;
         }
     }
-    public void Winlevel()
+   public void Winlevel()
     {
-        Data.gamePlayManager. pausegame = true;
+        Data.gamePlayManager.SetPause(true);
+        UIManager.Ins.GetUI<VictoryUI>().Open();
+        UIManager.Ins.GetUI<GameplayUI>().Close(0f);
     }
     public void NextLevel()
     {
         if (CurrenNumberLevel + 1 > ListGameLever.Count) return;
         StopAllAnimations();
        
-        foreach (Transform child in LeverGame.transform)
+        foreach (Transform child in LevelGame.transform)
         {
             Destroy(child.gameObject);
         }
         SetUpLevel(CurrenNumberLevel + 1);
-        Data.gamePlayManager.SetPause(false);
+       // Data.gamePlayManager.SetPause(false);
         UpdateScore();
     }
 

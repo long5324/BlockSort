@@ -29,17 +29,20 @@ public class VictoryUI : UICanvas
         GameManager.Ins.Replay();
         Close(0f);
         GamePlayUI.Open();
+        GamePlayManager.Ins.SetPause(false);    
     }
     void NextLevel()
     {
         GameManager.Ins.NextLevel();
         Close(0f);
         GamePlayUI.Open();
+        GamePlayManager.Ins.SetPause(false);
     }
     void GoBackHome()
     {
         GameManager.Ins.BackToHome();
         Close(0f);
         UIManager.Ins.GetUI<HomeUI>().Open();
+        GamePlayManager.Ins.SetPause(false);
     }
 }

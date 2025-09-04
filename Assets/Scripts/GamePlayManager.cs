@@ -1,4 +1,5 @@
 ﻿using DG.Tweening.Core.Easing;
+using Lean.Pool;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -6,35 +7,32 @@ using static UnityEngine.GraphicsBuffer;
 
 public class GamePlayManager : Singleton<GamePlayManager>
 {
-    public List<GameObject> ListBlockGamePlay;
-    [SerializeField] public float sizeYBlock { get; set; } = 0.003f;
-    [SerializeField] public float MunberBlock = 11;
-    public List<BlockControl> BottomBlock ;
+    public List<BlockControl> BottomBlock { get; set; }
+    public List<GameObject> ListBlockGamePlay { get; set; }
+    public List<Vector3> ListDefaulPossitionBlockGamePlay { get; set; } = new List<Vector3>();
+    public List<Vector3> DelayCheck { get; set; } = new List<Vector3>();
+    public float sizeYBlock { get; set; } = 0.0025f;
+    public float MunberBlockEat = 10;
     public GameObject MapGamePlay;
+    public Block DataBlockChild;
     Camera cam;
     ObjectSet selectedBlock;
     public BlockControl TagertBlock { get; set; }
-    public List<Vector3> ListDefaulPossitionBlockGamePlay { get; set; } = new List<Vector3>();
     public int CountScaleScore { get; set; } = 0;
     public bool StartScaleScore { get; set; } = false;
     public int CurrenScore { get; set; } = 0;
     public int ScorePluss { get; set; } = 0;
-    bool pause = false;
-    private Vector3 baseScale = new Vector3(0.9f, 0.9f, 0.9f);
+    public Vector3 baseScale { get; private set; } = new Vector3(0.9f, 0.9f, 0.9f);
     private float referenceWidth = 1080f;
     private float referenceHeight = 2280f;
-    public List<Vector3> DelayCheck = new List<Vector3>();
+    private bool pause = false;
     DataInport Data;
-    public bool pausegame =false;
     private void Start()
     {
         Data = DataInport.Ins;
         Application.targetFrameRate = 60;
         AdjustScaleToScreen();
         cam = Camera.main;
-        /* setPause(true);
-         setActiveListGamePlay(false);
-         SetStartBlockPlay();*/
     }
     public void SetUpChangeLevel()
     {
@@ -48,13 +46,10 @@ public class GamePlayManager : Singleton<GamePlayManager>
             BottomBlock.Add(i.GetComponent<BlockControl>());
         }
     }
-    public void SetPause( bool b)
-    {
-        pausegame = b;
-    }
     private void Update()
     {
-        if(pausegame) return;
+        if (pause) return;
+       
         if (selectedBlock == null && Input.GetMouseButtonDown(0))
         {
             TargetBlockPlay();
@@ -68,16 +63,15 @@ public class GamePlayManager : Singleton<GamePlayManager>
             SetAllDefaut();
             EndClicK();
         }
-        if (CheckLose() && Data.animationControl.Ani == null)
-        {
-            SaveScore(CurrenScore);
-          //  uiManager.Losegame();
-        }
         if(!Data.animationControl.IsRun && !Data.animationControl.ScorePlus && Data.animationControl.Ani.BlockStart ==null && DelayCheck.Count >0)
         {
             CheckFirt(DelayCheck[0]);
             DelayCheck.RemoveAt(0);
         }
+    }
+    public void SetPause(bool p)
+    {
+        pause = p;
     }
     public void setColliderSize()
     {
@@ -128,60 +122,55 @@ public class GamePlayManager : Singleton<GamePlayManager>
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
-        // Kiểm tra xem ray có cắt vào bất kỳ đối tượng nào trong Layer "GridBlock" không
         if (Physics.Raycast(ray, out hit, 100f, LayerMask.GetMask("GridBlock")))
         {
             GameObject bottomBlockObject = hit.collider.gameObject;
             BlockControl bottomBlockControl = bottomBlockObject.GetComponent<BlockControl>();
 
-            // Kiểm tra nếu TagertBlock không phải null và cập nhật màu
             if (TagertBlock != null)
             {
-                TagertBlock.SetColor(Data.gameManager.BlockData.DataBases[Data.gameManager.BlockData.DataBases.Count - 2].BlockMaterial);
+                TagertBlock.SetColor(Data.gameManager.BlockData.GetMaterial(BlockColor.CheckBottomColor));
             }
 
-            // Kiểm tra nếu TagertBlock là null và bottomBlockControl không phải null và có tag "BottomBlock"
             if ( bottomBlockControl != null && bottomBlockControl.CompareTag("BottomBlock"))
             {
                 if (Data.gameManager.BlockData.DataBases != null && Data.gameManager.BlockData.DataBases.Count > 1)
                 {
                     TagertBlock = bottomBlockControl;
 
-                    // Nếu block đã có child, reset TagertBlock
                     if (bottomBlockControl.transform.childCount > 0)
                     {
                         TagertBlock = null;
                     }
 
-                    // Nếu block trước đó khác block hiện tại, reset lại material của block trước đó
                     if (previousBlock != null && previousBlock != bottomBlockObject)
                     {
                         BlockControl previousBlockControl = previousBlock.GetComponent<BlockControl>();
                         if (previousBlockControl != null)
                         {
-                            Material defaultMaterial = Data.gameManager.BlockData.DataBases[Data.gameManager.BlockData.DataBases.Count - 1].BlockMaterial;
+                            Material defaultMaterial = Data.gameManager.BlockData.GetMaterial(BlockColor.DefautColor);
                             previousBlockControl.GetComponent<Renderer>().material = defaultMaterial;
                         }
                     }
 
-                    previousBlock = bottomBlockObject; // Cập nhật previousBlock
+                    previousBlock = bottomBlockObject;
                 }
             }
-            // Nếu bottomBlockControl là null hoặc TagertBlock không phải null và không phải "BottomBlock"
+        
             else if (bottomBlockControl == null && TagertBlock != null)
             {
-                TagertBlock.SetColor(Data.gameManager.BlockData.DataBases[Data.gameManager.BlockData.DataBases.Count - 1].BlockMaterial);
-                TagertBlock = null; // Reset TagertBlock
+               TagertBlock.SetColor(Data.gameManager.BlockData.GetMaterial(BlockColor.DefautColor));
+                TagertBlock = null; 
             }
 
-            // Cập nhật vị trí của selectedBlock
+         
             Vector3 targetPos = hit.point ;
-            targetPos.y = hit.point.y + 2f; // Điều chỉnh vị trí y cho block
+            targetPos.y = hit.point.y + 2f;
             selectedBlock.transform.position = targetPos;
         }
         else
         {
-            // Nếu raycast không cắt vào bất kỳ block nào, reset TagertBlock
+          
             if (previousBlock != null)
             {
                 TagertBlock = null;
@@ -189,15 +178,23 @@ public class GamePlayManager : Singleton<GamePlayManager>
                 BlockControl previousBlockControl = previousBlock.GetComponent<BlockControl>();
                 if (previousBlockControl != null)
                 {
-                    Material defaultMaterial = Data.gameManager.BlockData.DataBases[Data.gameManager.BlockData.DataBases.Count - 1].BlockMaterial;
+                    Material defaultMaterial = DataBlockChild.GetMaterial(BlockColor.DefautColor);
                     previousBlockControl.GetComponent<Renderer>().material = defaultMaterial;
                 }
 
-                previousBlock = null; // Reset previousBlock
+                previousBlock = null;
             }
         }
     }
-
+    public bool CheckLost()
+    {
+        foreach(var i in BottomBlock)
+        {
+            if(i.ListChildBlock.Count ==0) return false;
+            if(i.CheckArow().Count > 0) return false;
+        }
+        return true;
+    }
 
     void CheckGamePlay()
     {
@@ -217,7 +214,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     void SetAllDefaut()
     {
         if (TagertBlock == null) return;
-           TagertBlock.GetComponent<BlockControl>().SetColor(Data.gameManager.BlockData.DataBases[Data.gameManager.BlockData.DataBases.Count - 1].BlockMaterial);
+        TagertBlock.GetComponent<BlockControl>().SetColor(Data.gameManager.BlockData.GetMaterial(BlockColor.DefautColor));
     }
 
     public void CheckFirt(Vector3 Po)
@@ -249,43 +246,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         
 
     }
-    public void setPause(bool b)
-    {
-        pause = b;
-    }
-    public void SortAll()
-    {
-        for (int i = 0; i < BottomBlock.Count; i++)
-        {
-            var current = BottomBlock[i];
-            if (current.ListChildBlock.Count == 0) continue;
 
-            List<BlockControl> ListCheck = new List<BlockControl>();
-            foreach (var j in BottomBlock)
-            {
-                Vector2 diff = j.PosionBlock - current.PosionBlock;
-                if (diff == new Vector2(1, 1) || diff == new Vector2(-1, -1) ||
-                    diff == new Vector2(1, 0) || diff == new Vector2(0, 1) ||
-                    diff == new Vector2(-1, 0) || diff == new Vector2(0, -1) ||
-                    diff == new Vector2(1, -1) || diff == new Vector2(-1, 1))
-                {
-                    ListCheck.Add(j);
-                }
-            }
-            foreach (var k in ListCheck)
-            {
-                if (current.ListChildBlock.Count == 0) continue;
-                if (k.ListChildBlock.Count == 0) continue;
-                if (k.ListChildBlock[0].CurrenColor != current.ListChildBlock[0].CurrenColor) continue;
-                Sortspecifically(current, k);
-                return;
-            }
-        }
-
-    }
-    void Sortspecifically(BlockControl start, BlockControl end)
-    {
-    }
     void EndClicK()
     {
         if(selectedBlock == null) { return; }
@@ -315,7 +276,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
             selectedBlock.ListChildBlock[i].transform.SetParent(TagertBlock.transform);
             selectedBlock.ListChildBlock[i].transform.localPosition = new Vector3(0,sizeYBlock*(i+1),0);
             selectedBlock.ListChildBlock[i].transform.localRotation = Quaternion.identity;
-
+            selectedBlock.ListChildBlock[i].transform.localScale = baseScale;
             TagertBlock.ListChildBlock.Add(selectedBlock.ListChildBlock[i]);
         }
         if (Data.animationControl.ScorePlus || Data.animationControl.IsRun)
@@ -348,8 +309,13 @@ public class GamePlayManager : Singleton<GamePlayManager>
                 if (BlockE <= 0) break;
                 int currentBlock = Random.Range(1, BlockE + 1);  
                 BlockE -= currentBlock; 
-                BlockColor color = Data.gameManager.BlockData.DataBases[ColorBlock[j]].BlockColor;
-                List<Transform> ObjectGame = Data.ObjectBooling.getObjectChile(color, currentBlock);
+                BlockColor color = Data.gameManager.BlockData.DataBases[ColorBlock[j]].CurrenColor;
+                List<Transform> ObjectGame = new List<Transform>();
+                for (int k = 0; k < countBlock; k++)
+                {
+                    ObjectGame.Add(DataBlockChild.GetBlockChild(color).transform);
+
+                }
                 for (int k = 0; k < currentBlock; k++)
                 {
                     if (k < ObjectGame.Count)
@@ -358,7 +324,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
                         ObjectGame[k].transform.SetParent(i.transform);
                         ObjectGame[k].transform.localRotation = Quaternion.identity;
                         ObjectGame[k].transform.localPosition = new Vector3(0, sizeYBlock * i.transform.childCount, 0);  
-                        ObjectGame[k].transform.localScale = Vector3.one; 
+                        ObjectGame[k].transform.localScale = baseScale; 
                     }
                 }
             }
@@ -371,7 +337,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         {
             BoxCollider Col = i .GetComponent<BoxCollider>();
             ObjectSet OJS = i.GetComponent<ObjectSet>();
-            float SizeY = Col.size.y * OJS.ListChildBlock.Count;
+            float SizeY = 0.005f * OJS.ListChildBlock.Count;
             Col.size = new Vector3(Col.size.x, SizeY, Col.size.z);
             Col.center = new Vector3(Col.center.x, SizeY/3, Col.center.z);
         }
@@ -392,11 +358,6 @@ public class GamePlayManager : Singleton<GamePlayManager>
     
         return countScore;
     }
-    private void OnApplicationQuit()
-    {
-        SaveScore(CurrenScore);
-    }
-
     public void UpdateScore()
     {
         int scalse = (CountScaleScore / 5) + 1;
@@ -404,30 +365,5 @@ public class GamePlayManager : Singleton<GamePlayManager>
         UIManager.Ins.GetUI<GameplayUI>().SetFillScore(CurrenScore,Data.gameManager.MaxCurrenScore);
         CountScaleScore = 0;
         ScorePluss = 0;
-    }
-    public void SaveScore(int score)
-    {
-        int lastScore = LoadScore();
-        if (score > lastScore)
-        {
-            PlayerPrefs.SetInt("HighScore", score);
-            PlayerPrefs.Save();
-        }
-    }
-
-    public int LoadScore()
-    {
-        return PlayerPrefs.GetInt("HighScore", 0);
-    }
-    public bool CheckLose()
-    {
-        foreach (var i in BottomBlock)
-        {
-            if (i.ListChildBlock.Count == 0)
-            {
-                return false;
-            }
-        }
-        return true;
     }
 }

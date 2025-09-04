@@ -1,4 +1,5 @@
 ﻿using DG.Tweening.Core.Easing;
+using Lean.Pool;
 using Sirenix.OdinInspector;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,11 +19,18 @@ public class InitGrid : MonoBehaviour
     public bool DrawGrid=false ;
     [SerializeField] List<Vector3> CenterGird = new List<Vector3>();
     public  List<BlockControl> ListblockGround  = new List<BlockControl>();
-    public LevelSave NewLevel;
     GamePlayManager gamePlayManager;
     GameManager gameManager;
-    ObjectBoolingControler ObjectBooling;
-    [Button(ButtonSizes.Large)]
+
+   
+
+    private void Start()
+    {
+        foreach(Transform i in transform)
+        {
+            i.GetComponent<BlockControl>().SpawnBlockChildWithBool();
+        }
+    } [Button(ButtonSizes.Large)]
     public void StartInitGrid()
     {
         CenterGird.Clear();
@@ -63,38 +71,62 @@ public class InitGrid : MonoBehaviour
         }
         SetupBlock();
     }
-    private void Start()
-    {
-        RandomSpawn();
-    }
     public void SetupBlock()
     {
         ListblockGround.Clear();
         ChangePositonGround();
     }
+    public void ClearData()
+    {
+        ClearChildren(transform);
+    }
+
+    private void ClearChildren(Transform parent)
+    {
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            Transform child = parent.GetChild(i);
+            BlockControl bc = child.GetComponent<BlockControl>();
+            if (bc != null)
+            {
+                bc.DataSpawn.Clear();
+                bc.ListChildBlock.Clear();
+            }
+            for (int j = child.childCount - 1; j >= 0; j--)
+            {
+                Transform grandChild = child.GetChild(j);
+
+               
+                if (Application.isPlaying)
+                    Destroy(grandChild.gameObject);
+                else
+                    DestroyImmediate(grandChild.gameObject);
+            }
+        }
+    }
+
+    [Button(ButtonSizes.Large)]
     public void RandomSpawn()
     {
+        ClearData();
         gamePlayManager = GamePlayManager.Ins;
         gameManager = GameManager.Ins;
-        ObjectBooling = ObjectBoolingControler.Ins;
-
-        // 🔥 Lấy danh sách 2 block cha random từ con của object này
-        List<Transform> pickedChildren = GetRandomChildren(transform, 2);
+        List<Transform> pickedChildren = GetRandomChildren(transform, numberRandom);
 
         for (int i = 0; i < pickedChildren.Count; i++)
         {
             BlockControl block = pickedChildren[i].GetComponent<BlockControl>();
             if (block == null) continue;
-
-            // Random màu cho block
             int colorIndex = Random.Range(0, 7);
-            BlockColor color = gameManager.BlockData.DataBases[colorIndex].BlockColor;
+            BlockColor color = gameManager.BlockData.DataBases[colorIndex].CurrenColor;
 
-            // Random số lượng block con (ví dụ 2–6 con trong block)
             int countBlock = Random.Range(2, 7);
+            List<Transform> ObjectGame = new List<Transform>();
+            for (int j = 0; j < countBlock; j++)
+            {
+                ObjectGame.Add(gamePlayManager.DataBlockChild.SpawnBlockNotBool(color).transform);
 
-            // Lấy từ ObjectPooling
-            List<Transform> ObjectGame = ObjectBooling.getObjectChile(color, countBlock);
+            }
 
             for (int j = 0; j < countBlock; j++)
             {
@@ -104,7 +136,7 @@ public class InitGrid : MonoBehaviour
                     ObjectGame[j].transform.SetParent(block.transform);
                     ObjectGame[j].transform.localRotation = Quaternion.identity;
                     ObjectGame[j].transform.localPosition = new Vector3(0, gamePlayManager.sizeYBlock * (j+1), 0);
-                    ObjectGame[j].transform.localScale = new Vector3(0.9f,0.9f,0.9f);
+                    ObjectGame[j].transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
 
                     // lưu vào danh sách con của block
                     block.ListChildBlock.Add(ObjectGame[j].GetComponent<ChildBlock>());
@@ -115,6 +147,13 @@ public class InitGrid : MonoBehaviour
             ObjectSet set = block.GetComponent<ObjectSet>();
             if (set != null)
                 set.AddLisst();
+        }
+        foreach(var i in ListblockGround)
+        {
+            if(i.ListChildBlock.Count > 0)
+            {
+                i.UpdateDataSpawn();
+            }
         }
     }
 
@@ -178,25 +217,7 @@ public class InitGrid : MonoBehaviour
         LinkGroud();
     }
 
-    [ContextMenu("SaveLevel")]
-    public void SaveLevel()
-    {
-        NewLevel.Database.sizeGrid = sizeGrid;
-        NewLevel.Database.NumberInit = NumberInit;
-        NewLevel.Database.DefaultCenter = DefaultCenter;
-
-        // Tạo bản sao list Vector3
-        NewLevel.Database.CenterGird = new List<Vector3>(CenterGird);
-
-        // Tạo bản sao BlockData (không lưu BlockControl trực tiếp)
-        List<BlockControl> blockDataList = new List<BlockControl>();
-        foreach (var bc in ListblockGround)
-        {
-            blockDataList.Add(bc); 
-        }
-        NewLevel.Database.ListblockGround = blockDataList;
-    }
-
+  
     void LinkGroud()
     {
         foreach(Transform i in gameObject.transform)

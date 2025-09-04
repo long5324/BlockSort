@@ -1,6 +1,10 @@
+using JetBrains.Annotations;
+using Lean.Pool;
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+
 [Serializable]
 public enum BlockColor
 {
@@ -11,27 +15,58 @@ public enum BlockColor
     Yellow,
     Black,
     White,
-    Pink
+    Pink,
+    CheckBottomColor,
+    DefautColor
 }
-[Serializable]
-public struct BlockDataBase
-{
-    public BlockColor BlockColor;
-    public Material BlockMaterial;
-}
+[System.Serializable] 
 
 [CreateAssetMenu(fileName = "BlockData", menuName = "Data/BlockData")]
 public class Block : ScriptableObject
 {
-    public List<BlockDataBase> DataBases;
-    public Material GetMaterial(BlockColor Color)
+    public GameObject ObjectBoolingControl;
+    public List<ChildBlock> DataBases = new List<ChildBlock>();
+    public GameObject GetBlockChild(BlockColor Color)
     {
-        foreach (var data in DataBases) { 
-           if(data.BlockColor == Color)
+        GameObject ObjectR = null;
+
+        foreach (ChildBlock b in DataBases)
+        {
+            if (b.CurrenColor == Color)
             {
-                return data.BlockMaterial;
+                ObjectR = LeanPool.Spawn(b.gameObject);
+                ObjectR.transform.SetParent(ObjectBoolingControl.transform);
+                break;
             }
         }
-        return null;    
+        return ObjectR;
     }
+    public GameObject SpawnBlockNotBool(BlockColor Color)
+    {
+        GameObject ObjectR = null;
+
+        foreach (ChildBlock b in DataBases)
+        {
+            if (b.CurrenColor == Color)
+            {
+                ObjectR = Instantiate(b.gameObject);
+            
+                break;
+            }
+        }
+        return ObjectR;
+    }
+    public Material GetMaterial(BlockColor Color)
+    {
+        foreach (var i in DataBases)
+        {
+            if (i.CurrenColor == Color)
+            {
+                return i.gameObject.GetComponent<Renderer>().sharedMaterial;
+            }
+        }
+        return null;
+    }
+
+
 }

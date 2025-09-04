@@ -1,5 +1,6 @@
 ﻿using DG.Tweening;
 using DG.Tweening.Core.Easing;
+using Lean.Pool;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,7 @@ using UnityEngine.UIElements;
 
 public class Animation : Singleton<Animation>
 {
+    public EffectData particleObject;
     [SerializeField] public float TimeUpBlock { get; private set; } = 0.05f;
     [SerializeField] public float TimeMoveBlock { get; private set; } = 0.05f;
     [SerializeField] public float TimeDownBlock { get; private set; } = 0.05f;
@@ -123,13 +125,12 @@ public class Animation : Singleton<Animation>
         Data.animationControl.IsRun = false;
         Data.animationControl.ChangeInDataBlockControl(BlockStart);
         Data.animationControl.ChangeInDataBlockControl(BlockEnd);
-        StartCoroutine(AddCheck(BlockStart));
-        StartCoroutine(AddCheck(BlockEnd));
+        AddCheck(BlockStart);
+        AddCheck(BlockEnd);
     }
 
-    IEnumerator AddCheck (Vector3 BlockList)
+    void AddCheck (Vector3 BlockList)
     {
-        yield return new WaitForSeconds(0.5f);
         Data.gamePlayManager.DelayCheck.Add(BlockList);
     }
     public void AniStartButton(RectTransform transform)
@@ -138,14 +139,9 @@ public class Animation : Singleton<Animation>
             .SetLoops(-1, LoopType.Yoyo) 
             .SetEase(Ease.InOutSine);  
     }
-
-
-    public void WaitBack(List<Transform> children)
-    {
-       
-    }
     public IEnumerator PlusScore(BlockControl block, int score, float delay)
     {
+        ParticleSystem Particle = particleObject.StartEffect(block.CheckColor(), block.PosionBlock);
         Data.gamePlayManager.StartScaleScore = false;
         yield return new WaitForSeconds(delay);
         List<Transform> children = new List<Transform>();
@@ -157,29 +153,34 @@ public class Animation : Singleton<Animation>
             Transform child = block.transform.GetChild(i);
             children.Add(child);
         }
-
+       
         for (int i = 0; i < children.Count; i++)
         {
             if (children[i] != null)
-                yield return children[i].DOScale(Vector3.zero, 0.04f).WaitForCompletion();
+            {
+                Particle.transform.position = children[i].position ;
+                yield return children[i].DOScale(Vector3.zero, 0.06f).WaitForCompletion();
+                LeanPool.Despawn(children[i].gameObject);
+            }
 
         }
+        Destroy(Particle);
+        //Destroy(Particle);
         Data.gamePlayManager.CurrenScore += children.Count;
         UIManager.Ins.GetUI<GameplayUI>().SetFillScore(Data.gamePlayManager.CurrenScore, Data.gameManager.MaxCurrenScore);
+     
         UIManager.Ins.GetUI<GameplayUI>().SetTextScore(Data.gamePlayManager.CurrenScore.ToString()+"/"+ Data.gameManager.MaxCurrenScore.ToString());
-        for (int i = block.transform.childCount - 1; i >= 0; i--)
-        {
-            Destroy(block.transform.GetChild(i).gameObject);
-        }
-
-        Data.animationControl.ChangeInDataBlockControl(block.PosionBlock);
-        if (Data.gamePlayManager.CurrenScore > Data.gameManager.MaxCurrenScore)
+        if (Data.gamePlayManager.CurrenScore >= Data.gameManager.MaxCurrenScore)
         {
             Data.gameManager.Winlevel();
         }
-        Debug.Log(block.PosionBlock);
-        StartCoroutine(AddCheck(block.PosionBlock));
+        Data.animationControl.ChangeInDataBlockControl(block.PosionBlock);
+        if (Data.gamePlayManager.CurrenScore > Data.gameManager.MaxCurrenScore)
+        {
+          //  Data.gameManager.Winlevel();
+        }
+        AddCheck(block.PosionBlock);
         Data.animationControl.ScorePlus = false;
-
+        
     }
 }

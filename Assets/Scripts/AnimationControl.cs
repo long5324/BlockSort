@@ -23,6 +23,9 @@ public class AnimationControl : Singleton<AnimationControl>
     public bool IsRun { get;  set; } = false;
     public IfData Ani = new IfData();
     DataInport Data;
+    bool StratCheck = false;
+    Coroutine CheckSocre = null;
+
     private void Start()
     {
         Data = DataInport.Ins;
@@ -38,19 +41,24 @@ public class AnimationControl : Singleton<AnimationControl>
         else delaysort = false; 
         if (Ani.BlockStart!=null && !IsRun && !ScorePlus && !delaysort)
         {
-            StartCoroutine(DelaySort());
+            HandleData();
             IsRun = true;
+            if (CheckSocre != null)
+            {
+                StopCoroutine(CheckSocre);
+                CheckSocre = null;
+            }
         }
-        else if (Ani.BlockStart == null && !IsRun && !ScorePlus)
+        else if (Ani.BlockStart == null && !IsRun && !ScorePlus && CheckSocre == null)
         {
-            HandleScore();
+            CheckSocre = StartCoroutine(DelayCheckSocre());
         }
 
     }
-    IEnumerator DelaySort()
+    public IEnumerator DelayCheckSocre()
     {
-        yield return new WaitForSeconds(0.1f);
-        HandleData();
+        yield return new WaitForSeconds(1);
+        HandleScore();
     }
     private void HandleData()
     {
@@ -84,7 +92,7 @@ public class AnimationControl : Singleton<AnimationControl>
         if (gamePlayManager.BottomBlock == null || gamePlayManager.BottomBlock.Count == 0) return;
         foreach (var block in gamePlayManager.BottomBlock)
         {
-            if (block.ListChildBlock.Count < gamePlayManager.MunberBlock || gamePlayManager.CheckScore(block) < gamePlayManager.MunberBlock)
+            if (block.ListChildBlock.Count < gamePlayManager.MunberBlockEat || gamePlayManager.CheckScore(block) < gamePlayManager.MunberBlockEat)
                 continue;
 
             int score = gamePlayManager.CheckScore(block);

@@ -9,9 +9,11 @@ public class GameplayUI : UICanvas
     [SerializeField] Image FillScore;
     [SerializeField] TextMeshProUGUI TextScore;
     [SerializeField] Button SettingButton;
+    [SerializeField] Button ReRollButton;
     private void Awake()
     {
-        SettingButton.onClick.RemoveListener(SettingEvent);
+        SettingButton.onClick.AddListener(SettingEvent);
+        ReRollButton.onClick.AddListener(ReRollButtonEvent);
     }
     public void SetFillScore(float CurrenScore, float MaxScore)
     {
@@ -30,6 +32,11 @@ public class GameplayUI : UICanvas
     {
 
         base.Open();
+    }
+    public void ReRollButtonEvent()
+    {
+        Debug.Log("ClickRoll");
+        GameManager.Ins.Rerool();
     }
     public override void Close(float delayTime)
     {

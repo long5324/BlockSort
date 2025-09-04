@@ -1,11 +1,20 @@
 ﻿
+using Sirenix.OdinInspector;
 using System.Collections.Generic;
+using Unity.PlasticSCM.Editor.WebApi;
 using UnityEngine;
 using UnityEngine.UIElements;
-
+[System.Serializable]
+public class BlockLevelDefaut
+{
+    public BlockColor Color;
+    public int NumberSpawm;                            
+}
 public class BlockControl : MonoBehaviour
 {
-    
+    [Header("SupportSaveLevel")]
+    public List<BlockLevelDefaut> DataSpawn = new List<BlockLevelDefaut>();
+
     public List<ChildBlock> ListChildBlock ;
     public bool Tagert { get; set; }
     public Vector3 PosionBlock ;
@@ -62,6 +71,99 @@ public class BlockControl : MonoBehaviour
             ListChildBlock.Add(i.GetComponent<ChildBlock>());
         }
     }
+    [Button(ButtonSizes.Large)]
+    public void SpawnBlockChild()
+    {
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+
+            if (!Application.isPlaying)
+                DestroyImmediate(transform.GetChild(i).gameObject);
+            else
+                Destroy(transform.GetChild(i).gameObject);
+
+            ListChildBlock.Clear();
+        }
+        foreach(var i in DataSpawn)
+        {
+            for(int j = 0;j < i.NumberSpawm; j++)
+            {
+                GamePlayManager gamePlaymanager = GamePlayManager.Ins;
+               GameObject Obj = gamePlaymanager.DataBlockChild.SpawnBlockNotBool(i.Color);
+                Obj.transform.SetParent(transform);
+                Obj.transform.localScale = gamePlaymanager.baseScale;
+                Obj.transform.localPosition = new Vector3(0, gamePlaymanager.sizeYBlock * transform.childCount, 0);
+                ListChildBlock.Add(Obj.GetComponent<ChildBlock>());
+
+            }
+        }
+    }
+    public void SpawnBlockChildWithBool()
+    {
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+
+            if (!Application.isPlaying)
+                DestroyImmediate(transform.GetChild(i).gameObject);
+            else
+                Destroy(transform.GetChild(i).gameObject);
+
+            ListChildBlock.Clear();
+        }
+        foreach (var i in DataSpawn)
+        {
+            for (int j = 0; j < i.NumberSpawm; j++)
+            {
+                GamePlayManager gamePlaymanager = GamePlayManager.Ins;
+                GameObject Obj = gamePlaymanager.DataBlockChild.GetBlockChild(i.Color);
+                Obj.transform.SetParent(transform);
+                Obj.transform.localScale = gamePlaymanager.baseScale;
+                Obj.transform.localPosition = new Vector3(0, gamePlaymanager.sizeYBlock * (j + 1), 0);
+                ListChildBlock.Add(Obj.GetComponent<ChildBlock>());
+
+            }
+        }
+    }
+    public void UpdateDataSpawn()
+    {
+        if (ListChildBlock == null || ListChildBlock.Count == 0)
+            return;
+
+        DataSpawn.Clear(); // tránh cộng dồn dữ liệu cũ
+
+        int CurrenCheck = 0;
+        BlockColor CurrenColor = ListChildBlock[0].CurrenColor;
+        int count = 0;
+
+        while (CurrenCheck < ListChildBlock.Count)
+        {
+            if (CurrenColor == ListChildBlock[CurrenCheck].CurrenColor)
+            {
+                count++;
+            }
+            else
+            {
+                // Lưu nhóm cũ
+                BlockLevelDefaut Df = new BlockLevelDefaut();
+                Df.Color = CurrenColor;
+                Df.NumberSpawm = count;
+                DataSpawn.Add(Df);
+
+                // Reset cho nhóm mới
+                CurrenColor = ListChildBlock[CurrenCheck].CurrenColor;
+                count = 1;
+            }
+
+            CurrenCheck++;
+        }
+
+        // 🔥 Đừng quên add nhóm cuối cùng
+        BlockLevelDefaut last = new BlockLevelDefaut();
+        last.Color = CurrenColor;
+        last.NumberSpawm = count;
+        DataSpawn.Add(last);
+    }
+
     public void CopyDataFrom(BlockControl other)
     {
         transform.localPosition = other.transform.localPosition;
