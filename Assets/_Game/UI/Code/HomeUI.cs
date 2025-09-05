@@ -1,4 +1,5 @@
 ﻿using DG.Tweening;
+using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net.WebSockets;
@@ -9,9 +10,11 @@ using UnityEngine.UI;
 public class HomeUI : UICanvas
 {
     [SerializeField] private Button playBtn;
-    private List<RectTransform> ListLevel = new List<RectTransform>();
+    [SerializeField] Button RightButton;
+    [SerializeField] Button LeftButton;
+    public List<RectTransform> ListLevel = new List<RectTransform>();
     public DataHomeLevel Data;
-    public List<GameObject> ObjectLevel;
+    public int NumberLevel;
     IEnumerator WaitOffUI(List<CanvasGroup> ListUI)
     {
         yield return new WaitForSeconds(1);
@@ -20,12 +23,16 @@ public class HomeUI : UICanvas
             i.alpha = 0;
         }
     }
-
-   
     private void Awake()
     {
         playBtn.onClick.AddListener(StartGame);
-
+        for(int i =0; i< ListLevel.Count; i++)
+        {
+            ListLevel[i].GetComponent<Image>().sprite = Data.UIGameLevel[i];
+        }
+    }
+    public void EventRightButton()
+    {
     }
     public override void Open()
     {

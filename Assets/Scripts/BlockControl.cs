@@ -1,7 +1,6 @@
 ﻿
 using Sirenix.OdinInspector;
 using System.Collections.Generic;
-using Unity.PlasticSCM.Editor.WebApi;
 using UnityEngine;
 using UnityEngine.UIElements;
 [System.Serializable]
@@ -32,6 +31,7 @@ public class BlockControl : MonoBehaviour
     }
     public void BacktoDFColor()
     {
+        if (Renderer == null) return;
         Renderer.material = MaterialDF;
     }
     public BlockColor CheckColor()
@@ -114,15 +114,17 @@ public class BlockControl : MonoBehaviour
 
             ListChildBlock.Clear();
         }
+        int Index = 0;
         foreach (var i in DataSpawn)
         {
             for (int j = 0; j < i.NumberSpawm; j++)
             {
+                Index++;
                 GamePlayManager gamePlaymanager = GamePlayManager.Ins;
                 ChildBlock Obj = GameManager.Ins.SpawnBlockChild(i.Color);
                 Obj.transform.SetParent(transform);
                 Obj.transform.localScale = gamePlaymanager.baseScale;
-                Obj.transform.localPosition = new Vector3(0, gamePlaymanager.sizeYBlock * (j + 1), 0);
+                Obj.transform.localPosition = new Vector3(0, gamePlaymanager.sizeYBlock * Index, 0);
                 ListChildBlock.Add(Obj);
 
             }

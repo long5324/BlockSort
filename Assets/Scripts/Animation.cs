@@ -54,7 +54,8 @@ public class Animation : Singleton<Animation>
         for (int i = 0; i < tf.Count; i++)
         {
             Vector3 pos = tf[i].localPosition;
-            Data.audioControl.StartUp();
+            AudioControl.Ins.PlaySFX(AudioControl.up);
+
 
             bool done = false;
 
@@ -84,7 +85,8 @@ public class Animation : Singleton<Animation>
             if (tf[i] == null) continue;
             tf[i].SetParent(blockEnd.transform);
             float newY = tf[i].transform.localPosition.y;
-            Data.audioControl.StartMove();
+            AudioControl.Ins.PlaySFX(AudioControl.move);
+
 
             bool done = false;
             tf[i].DOLocalMove(new Vector3(0, newY, 0), TimeMoveBlock)
@@ -107,7 +109,7 @@ public class Animation : Singleton<Animation>
                 if (tf[i] == null) continue;
 
                 float newY = lastHeightEnd + ((tf.Count - i) * Data.gamePlayManager.sizeYBlock);
-                Data.audioControl.StartDown();
+               AudioControl.Ins.PlaySFX(AudioControl.down);
 
                 bool done = false;
                 tf[i].DOLocalMove(new Vector3(0, newY, 0), TimeDownBlock)
@@ -139,7 +141,7 @@ public class Animation : Singleton<Animation>
             .SetLoops(-1, LoopType.Yoyo) 
             .SetEase(Ease.InOutSine);  
     }
-    public IEnumerator PlusScore(BlockControl block, int score, float delay)
+    public IEnumerator PlusScore(BlockControl block, int score, float delay, bool c)
     {
         ParticleSystem Particle = particleObject.StartEffect(block.CheckColor(), block.PosionBlock);
         Data.gamePlayManager.StartScaleScore = false;
@@ -153,14 +155,14 @@ public class Animation : Singleton<Animation>
             Transform child = block.transform.GetChild(i);
             children.Add(child);
         }
-       
+
         for (int i = 0; i < children.Count; i++)
         {
             if (children[i] != null)
             {
-                Particle.transform.position = children[i].position ;
+                Particle.transform.position = children[i].position;
                 yield return children[i].DOScale(Vector3.zero, 0.06f).WaitForCompletion();
-                LeanPool.Despawn(children[i].gameObject);
+                LeanPool.Despawn(children[i]);
             }
 
         }
@@ -168,8 +170,8 @@ public class Animation : Singleton<Animation>
         //Destroy(Particle);
         Data.gamePlayManager.CurrenScore += children.Count;
         UIManager.Ins.GetUI<GameplayUI>().SetFillScore(Data.gamePlayManager.CurrenScore, Data.gameManager.MaxCurrenScore);
-     
-        UIManager.Ins.GetUI<GameplayUI>().SetTextScore(Data.gamePlayManager.CurrenScore.ToString()+"/"+ Data.gameManager.MaxCurrenScore.ToString());
+
+        UIManager.Ins.GetUI<GameplayUI>().SetTextScore(Data.gamePlayManager.CurrenScore.ToString() + "/" + Data.gameManager.MaxCurrenScore.ToString());
         if (Data.gamePlayManager.CurrenScore >= Data.gameManager.MaxCurrenScore)
         {
             Data.gameManager.Winlevel();
@@ -177,10 +179,13 @@ public class Animation : Singleton<Animation>
         Data.animationControl.ChangeInDataBlockControl(block.PosionBlock);
         if (Data.gamePlayManager.CurrenScore > Data.gameManager.MaxCurrenScore)
         {
-          //  Data.gameManager.Winlevel();
+            //  Data.gameManager.Winlevel();
         }
         AddCheck(block.PosionBlock);
-        Data.animationControl.ScorePlus = false;
-        
+        if (c)
+        {
+            Data.animationControl.ScorePlus = false;
+            Debug.Log("ok check");
+        }
     }
-}
+    }

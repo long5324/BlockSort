@@ -1,8 +1,10 @@
 ﻿using DG.Tweening.Core.Easing;
 using Lean.Pool;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering.UI;
 using static UnityEngine.GraphicsBuffer;
 
 public class GamePlayManager : Singleton<GamePlayManager>
@@ -12,13 +14,13 @@ public class GamePlayManager : Singleton<GamePlayManager>
     public List<GameObject> ListBlockGamePlay { get; set; }
     public List<Vector3> ListDefaulPossitionBlockGamePlay { get; set; } = new List<Vector3>();
     public List<Vector3> DelayCheck { get; set; } = new List<Vector3>();
-    public float sizeYBlock { get; set; } = 0.0025f;
+    public float sizeYBlock { get; set; } = 0.00325f;
     public float MunberBlockEat = 10;
     public GameObject MapGamePlay;
     public Block DataBlockChild;
     Camera cam;
-    ObjectSet selectedBlock;
-    public BlockControl TagertBlock { get; set; }
+    ObjectSet selectedBlock = null;
+    public BlockControl TargetBlock { get; set; }
     public int CountScaleScore { get; set; } = 0;
     public bool StartScaleScore { get; set; } = false;
     public int CurrenScore { get; set; } = 0;
@@ -28,7 +30,9 @@ public class GamePlayManager : Singleton<GamePlayManager>
     private float referenceHeight = 2280f;
     private bool pause = false;
     DataInport Data;
-    
+
+    public LayerMask BlockLM;
+
     private void Start()
     {
         Data = DataInport.Ins;
@@ -107,92 +111,54 @@ public class GamePlayManager : Singleton<GamePlayManager>
             return;
         }
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
-
-        if (Physics.Raycast(ray, out hit))
+        Debug.Log("Click");
+        if (Physics.Raycast(ray, out RaycastHit hit, 100f, BlockLM))
         {
-            if (hit.collider.CompareTag("Block"))
-            {
-                selectedBlock = hit.collider.gameObject.GetComponent<ObjectSet>();
-            }
+            selectedBlock = hit.collider.gameObject.GetComponent<ObjectSet>();
         }
     }
     private GameObject previousBlock;
 
     void CheckBottomBlock()
     {
-        Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+        Ray ray = cam.ScreenPointToRay(Input.mousePosition + new Vector3(0,150,0));
+        Debug.Log(Input.mousePosition);
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit, 100f, LayerMask.GetMask("GridBlock")))
         {
+            if(hit.collider == null) return;
             GameObject bottomBlockObject = hit.collider.gameObject;
-            BlockControl bottomBlockControl = bottomBlockObject.GetComponent<BlockControl>();
-
-            if (TagertBlock != null)
-            {
-                TagertBlock.SetColor(LightMaterial);
-            }
-
-
-            if (bottomBlockControl != null && bottomBlockControl.CompareTag("BottomBlock"))
-            {
-
-                TagertBlock = bottomBlockControl;
-
-                if (bottomBlockControl.transform.childCount > 0)
-                {
-                    TagertBlock = null;
-                }
-
-                if (previousBlock != null && previousBlock != bottomBlockObject)
-                {
-                    BlockControl previousBlockControl = previousBlock.GetComponent<BlockControl>();
-                    if (previousBlockControl != null)
-                    {
-
-                        previousBlockControl.BacktoDFColor();
-                    }
-
-
-                    previousBlock = bottomBlockObject;
-                }
-            }
-
-            else if (bottomBlockControl == null && TagertBlock != null)
-            {
-                TagertBlock.BacktoDFColor();
-                TagertBlock = null;
-            }
-            foreach(var i in BottomBlock)
-            {
-                if(i != TagertBlock)
-                {
-                    i.BacktoDFColor();
-                }
-            }
-
-            Vector3 targetPos = hit.point ;
+            Vector3 targetPos = hit.point;
             targetPos.y = hit.point.y + 2f;
-            selectedBlock.transform.position = targetPos;
-        }
-        else
-        {
-          
-            if (previousBlock != null)
-            {
-                TagertBlock = null;
 
-                BlockControl previousBlockControl = previousBlock.GetComponent<BlockControl>();
-                if (previousBlockControl != null)
+            selectedBlock.transform.position = targetPos ;
+
+            if (TargetBlock == null )
+            {
+                TargetBlock = hit.collider.gameObject.GetComponent<BlockControl>();
+            }
+            else
+            {
+                if(hit.collider.gameObject == TargetBlock.gameObject)
                 {
-                 
-                    previousBlockControl.BacktoDFColor();
+                    return;
+                }
+                else
+                {
+                    TargetBlock.BacktoDFColor();
+                    TargetBlock = hit.collider.gameObject.GetComponent<BlockControl>();
+                   
+                    TargetBlock.SetColor(LightMaterial);
+
+                    if (TargetBlock.transform.childCount > 0)
+                    {
+                        TargetBlock.BacktoDFColor();
+                    }
                 }
 
-                previousBlock = null;
             }
-        }
+        }     
     }
     public bool CheckLost()
     {
@@ -221,8 +187,8 @@ public class GamePlayManager : Singleton<GamePlayManager>
     }
     void SetAllDefaut()
     {
-        if (TagertBlock == null) return;
-        TagertBlock.GetComponent<BlockControl>().BacktoDFColor();
+        if (TargetBlock == null) return;
+        TargetBlock.GetComponent<BlockControl>().BacktoDFColor();
     }
 
     public void CheckFirt(Vector3 Po)
@@ -237,7 +203,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
                 break;
             }
         }
-        if (P == null) { Debug.Log("Pnull" + Po); return; }
+        if (P == null) {return; }
         List<BlockControl> ListBlock = P.CheckArow();
         if (ListBlock == null || ListBlock.Count == 0) return;
         
@@ -258,7 +224,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     void EndClicK()
     {
         if(selectedBlock == null) { return; }
-        if (TagertBlock == null)
+        if (TargetBlock == null)
             for (int i = 0; i < ListBlockGamePlay.Count; i++)
             {
                 ListBlockGamePlay[i].transform.position = ListDefaulPossitionBlockGamePlay[i];
@@ -272,29 +238,27 @@ public class GamePlayManager : Singleton<GamePlayManager>
             }
         }
         SetBlock();
-        TagertBlock = null;
         selectedBlock = null;
     }
 
     void SetBlock()
     {
-        if (selectedBlock == null || TagertBlock == null) return;
+        if (selectedBlock == null || TargetBlock == null || TargetBlock.transform.childCount >0) return;
         for(int i=0; i < selectedBlock.ListChildBlock.Count; i++)
         {
-            selectedBlock.ListChildBlock[i].transform.SetParent(TagertBlock.transform);
+            selectedBlock.ListChildBlock[i].transform.SetParent(TargetBlock.transform);
             selectedBlock.ListChildBlock[i].transform.localPosition = new Vector3(0,sizeYBlock*(i+1),0);
             selectedBlock.ListChildBlock[i].transform.localRotation = Quaternion.identity;
             selectedBlock.ListChildBlock[i].transform.localScale = baseScale;
-            TagertBlock.ListChildBlock.Add(selectedBlock.ListChildBlock[i]);
+            TargetBlock.ListChildBlock.Add(selectedBlock.ListChildBlock[i]);
         }
         if (Data.animationControl.ScorePlus || Data.animationControl.IsRun)
         {
-            DelayCheck.Add(TagertBlock.PosionBlock);
+            DelayCheck.Add(TargetBlock.PosionBlock);
            
         }
-        else {
-            Debug.Log("Check");
-            CheckFirt(TagertBlock.PosionBlock);
+        else { 
+            CheckFirt(TargetBlock.PosionBlock);
         }
         selectedBlock.ListChildBlock.Clear();
         CheckGamePlay();
@@ -347,7 +311,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
             BoxCollider Col = i .GetComponent<BoxCollider>();
             ObjectSet OJS = i.GetComponent<ObjectSet>();
             float SizeY = 0.005f * OJS.ListChildBlock.Count;
-            Col.size = new Vector3(Col.size.x, SizeY, Col.size.z);
+            Col.size = new Vector3(Col.size.x , SizeY , Col.size.z );
             Col.center = new Vector3(Col.center.x, SizeY/3, Col.center.z);
         }
     }

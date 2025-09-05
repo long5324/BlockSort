@@ -23,17 +23,26 @@ public class AnimationControl : Singleton<AnimationControl>
     public bool IsRun { get;  set; } = false;
     public IfData Ani = new IfData();
     DataInport Data;
-    bool StratCheck = false;
-    Coroutine CheckSocre = null;
-    bool Check = false;
+    Coroutine DeLayCheckScore=null;
     private void Start()
     {
         Data = DataInport.Ins;
         gamePlayManager = GamePlayManager.Ins;
        // GetComponent<Data.animation>().AniStartButton(uiManager.getStartButton());
     }
+
     private void Update()
     {
+
+        if(IsRun && Ani.BlockStart == null)
+        {
+            IsRun = false;
+        }
+
+        if (Data.gamePlayManager.DelayCheck.Count==0&&Ani.BlockStart == null && !IsRun && !ScorePlus && Data.gameManager.CheckEndGame())
+        {
+            Data.gameManager.EventEndGame();
+        }
         if (ScorePlus)
         {
             delaysort = true;
@@ -43,23 +52,23 @@ public class AnimationControl : Singleton<AnimationControl>
         {
             HandleData();
             IsRun = true;
-            if (CheckSocre != null)
+            if (DeLayCheckScore != null)
             {
-                StopCoroutine(CheckSocre);
-                CheckSocre = null;
+                StopCoroutine(DeLayCheckScore);
+                DeLayCheckScore = null;
             }
+            
         }
-        else if (Ani.BlockStart == null && !IsRun && !ScorePlus && CheckSocre == null)
+        else if (Ani.BlockStart == null && !IsRun && !ScorePlus && DeLayCheckScore == null)
         {
-            Check = false;
-            CheckSocre = StartCoroutine(DelayCheckSocre());
+            DeLayCheckScore= StartCoroutine(DelayCheckSocre());
+            
         }
 
     }
     public IEnumerator DelayCheckSocre()
     {
-        yield return new WaitForSeconds(1);
-        IsRun = false;
+        yield return new WaitForSeconds(0.05f);
         HandleScore();
     }
     private void HandleData()
@@ -92,7 +101,20 @@ public class AnimationControl : Singleton<AnimationControl>
     private void HandleScore()
     {
         if (gamePlayManager.BottomBlock == null || gamePlayManager.BottomBlock.Count == 0) return;
+        int MaxScore = 0;
+        bool Check = false;
         foreach (var block in gamePlayManager.BottomBlock)
+        {
+            if (block.ListChildBlock.Count < gamePlayManager.MunberBlockEat || gamePlayManager.CheckScore(block) < gamePlayManager.MunberBlockEat)
+                continue;
+
+            int score = gamePlayManager.CheckScore(block);
+            if(MaxScore < score)
+            {
+                MaxScore = score;
+            }
+        }
+            foreach (var block in gamePlayManager.BottomBlock)
         {
             if (block.ListChildBlock.Count < gamePlayManager.MunberBlockEat || gamePlayManager.CheckScore(block) < gamePlayManager.MunberBlockEat)
                 continue;
@@ -101,8 +123,16 @@ public class AnimationControl : Singleton<AnimationControl>
             if (score > 0)
             {
                 gamePlayManager.ScorePluss += score;
-                StartCoroutine(Data.animation.PlusScore(block, score, 0));
-                ScorePlus = true;
+                if (score == MaxScore && !Check )
+                {
+                    Check = true;
+                    StartCoroutine(Data.animation.PlusScore(block, score, 0, true));
+                }
+                else 
+                {
+                    StartCoroutine(Data.animation.PlusScore(block, score, 0, false));
+                }
+                    ScorePlus = true;
             }
 
         }
@@ -111,7 +141,6 @@ public class AnimationControl : Singleton<AnimationControl>
     {
         if (Start == null || End == null)
         {
-            Debug.Log(1);
             return;
         }
        
@@ -126,6 +155,9 @@ public class AnimationControl : Singleton<AnimationControl>
     {
         foreach (var i in gamePlayManager.BottomBlock)
         {
+            // Kiểm tra i có bị destroy không
+            if (i == null) continue;
+
             if (i.PosionBlock == Po)
             {
                 i.ListChildBlock = new List<ChildBlock>();
@@ -134,12 +166,16 @@ public class AnimationControl : Singleton<AnimationControl>
                 {
                     var child = k.GetComponent<ChildBlock>();
                     if (child != null)
+                    {
                         i.ListChildBlock.Add(child);
+                    }
                 }
             }
         }
+
         Ani = new IfData();
     }
+
 
 
 }

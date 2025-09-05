@@ -15,7 +15,7 @@ public class InitGrid : MonoBehaviour
     public float  sizeGrid = 1;
     public int NumberInit = 4;
     public int numberRandom = 6;
-    public Vector3 DefaultCenter = new Vector3(5.5f, -5, 1);
+    public Vector3 DefaultCenter ;
     public bool DrawGrid=false ;
     [SerializeField] List<Vector3> CenterGird = new List<Vector3>();
     public  List<BlockControl> ListblockGround  = new List<BlockControl>();
@@ -30,7 +30,8 @@ public class InitGrid : MonoBehaviour
         {
             i.GetComponent<BlockControl>().SpawnBlockChildWithBool();
         }
-    } [Button(ButtonSizes.Large)]
+    }
+    [Button(ButtonSizes.Large)]
     public void StartInitGrid()
     {
         CenterGird.Clear();
@@ -76,6 +77,7 @@ public class InitGrid : MonoBehaviour
         ListblockGround.Clear();
         ChangePositonGround();
     }
+    [Button(ButtonSizes.Large)]
     public void ClearData()
     {
         ClearChildren(transform);

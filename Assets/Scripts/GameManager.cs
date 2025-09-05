@@ -29,6 +29,7 @@ public class GameManager : Singleton<GameManager>
     public Block BlockData;
     public GameObject GamePlay;
     DataInport Data;
+    
     private void Start()
     {
         Data = DataInport.Ins;
@@ -51,8 +52,8 @@ public class GameManager : Singleton<GameManager>
             if(i.NumberLever == Number)
             {
                 CurrenNumberLevel = Number;
-                CurrenLevel = Instantiate(i.GameObjectLevel, new Vector3(5.5f, -5,1f), Quaternion.identity);
-                GameObject GamePlayy = Instantiate(GamePlay, new Vector3(1f, -0.5f, -3.5f), Quaternion.identity);
+                CurrenLevel = Instantiate(i.GameObjectLevel, Vector3.zero, Quaternion.identity);
+                GameObject GamePlayy = Instantiate(GamePlay, Vector3.zero, Quaternion.identity);
 
                 // ✅ Đặt parent đúng cách
                 CurrenLevel.transform.SetParent(LevelGame.transform, false);
@@ -76,7 +77,18 @@ public class GameManager : Singleton<GameManager>
     }
     public void BackToHome()
     {
+        foreach (Transform child in LevelGame.transform)
+        {
+            Destroy(child.gameObject);
+        }
         CurrenLevel = new GameObject();
+    }
+    public void DeleteLevel()
+    {
+        foreach (Transform child in LevelGame.transform)
+        {
+            Destroy(child.gameObject);
+        }
     }
     void UpdateScore()
     {
@@ -101,7 +113,7 @@ public class GameManager : Singleton<GameManager>
     public void Replay()
     {
         StopAllAnimations();
-     
+
         foreach (Transform child in LevelGame.transform)
         {
             Destroy(child.gameObject);
@@ -110,8 +122,8 @@ public class GameManager : Singleton<GameManager>
         {
             if (i.NumberLever == CurrenNumberLevel)
             {
-                CurrenLevel = Instantiate(i.GameObjectLevel, new Vector3(5.5f, -5, 1f), Quaternion.identity);
-                GameObject GamePlayy = Instantiate(GamePlay, new Vector3(1f, -0.5f, -3.5f), Quaternion.identity);
+                CurrenLevel = Instantiate(i.GameObjectLevel, Vector3.zero, Quaternion.identity);
+                GameObject GamePlayy = Instantiate(GamePlay, Vector3.zero, Quaternion.identity);
 
                 CurrenLevel.transform.SetParent(LevelGame.transform, false);
                 GamePlayy.transform.SetParent(LevelGame.transform, false);
@@ -171,6 +183,7 @@ public class GameManager : Singleton<GameManager>
         }
         return ObjectR;
     }
+    
     public ChildBlock SpawnBlockNotBool(BlockColor Color)
     {
         ChildBlock ObjectR = null;
@@ -204,6 +217,26 @@ public class GameManager : Singleton<GameManager>
             }
             break;
         }
+    }
+    public bool CheckEndGame()
+    {
+        if(Data.gamePlayManager.BottomBlock == null) return false;
+        foreach (var i in Data.gamePlayManager.BottomBlock)
+        {
+             if(i.ListChildBlock.Count == 0)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+   public void EventEndGame()
+    {
+        if (!CheckEndGame()) return;
+        UIManager.Ins.GetUI<LoseUI>().Open();
+        UIManager.Ins.GetUI<GameplayUI>().Close(0f);
+        DestroyLever();
     }
    public void Winlevel()
     {

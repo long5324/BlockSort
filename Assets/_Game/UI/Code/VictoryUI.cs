@@ -18,6 +18,7 @@ public class VictoryUI : UICanvas
     }
     public override void Open()
     {
+        GameManager.Ins.DeleteLevel();
         base.Open();
     }
     public override void Close(float delayTime)
