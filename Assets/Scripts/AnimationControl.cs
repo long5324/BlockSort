@@ -11,12 +11,12 @@ public class IfData
     public BlockControl BlockStart;
     public BlockControl BlockEnd;
 }
+
+
 [System.Serializable]
-
-
 public class AnimationControl : Singleton<AnimationControl>
 {
-  
+ 
     public bool ScorePlus { get;  set; } = false;  
     private GamePlayManager gamePlayManager;
     bool delaysort = false;
@@ -28,7 +28,6 @@ public class AnimationControl : Singleton<AnimationControl>
     {
         Data = DataInport.Ins;
         gamePlayManager = GamePlayManager.Ins;
-       // GetComponent<Data.animation>().AniStartButton(uiManager.getStartButton());
     }
 
     private void Update()
@@ -39,7 +38,7 @@ public class AnimationControl : Singleton<AnimationControl>
             IsRun = false;
         }
 
-        if (Data.gamePlayManager.DelayCheck.Count==0&&Ani.BlockStart == null && !IsRun && !ScorePlus && Data.gameManager.CheckEndGame())
+        if (Data.gamePlayManager.DelayCheck.Count==0 && Ani.BlockStart == null && !IsRun && !ScorePlus && Data.gameManager.CheckEndGame())
         {
             Data.gameManager.EventEndGame();
         }

@@ -28,8 +28,8 @@ public class GameManager : Singleton<GameManager>
     public GameObject LevelGame;
     public Block BlockData;
     public GameObject GamePlay;
-    DataInport Data;
-    
+    private DataInport Data;
+    public InitGrid CurrenGridLevel { get; set; }
     private void Start()
     {
         Data = DataInport.Ins;
@@ -54,8 +54,6 @@ public class GameManager : Singleton<GameManager>
                 CurrenNumberLevel = Number;
                 CurrenLevel = Instantiate(i.GameObjectLevel, Vector3.zero, Quaternion.identity);
                 GameObject GamePlayy = Instantiate(GamePlay, Vector3.zero, Quaternion.identity);
-
-                // ✅ Đặt parent đúng cách
                 CurrenLevel.transform.SetParent(LevelGame.transform, false);
                 GamePlayy.transform.SetParent(LevelGame.transform, false);
                 List<GameObject> ListBlockGamePlay= new List<GameObject>();
@@ -74,7 +72,10 @@ public class GameManager : Singleton<GameManager>
             }
         }
         UpdateScore();
+        GamePlayManager.Ins.UpdateListBlockLock();
+        CurrenGridLevel = CurrenLevel.GetComponent<InitGrid>();
     }
+
     public void BackToHome()
     {
         foreach (Transform child in LevelGame.transform)
@@ -212,7 +213,7 @@ public class GameManager : Singleton<GameManager>
         {
             if (i.NumberLever == NumberLever) {
 
-                i.GameObjectLevel.transform.position = i.GameObjectLevel.GetComponent<InitGrid>().DefaultCenter;
+                i.GameObjectLevel.transform.position = Vector3.zero;
                 CurrenLevel.transform.position = CurrenLevel.transform.position + new Vector3(0,-30,0);
             }
             break;

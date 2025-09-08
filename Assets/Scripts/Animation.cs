@@ -149,28 +149,49 @@ public class Animation : Singleton<Animation>
         List<Transform> children = new List<Transform>();
         Debug.Log(block.PosionBlock);
         int takeCount = Mathf.Min(score, block.transform.childCount);
-
+        List<BlockControl> BlockLockCount = new List<BlockControl>();
+        List<BlockControl> BlockArow = block.BlockLink;
+        foreach(var i in BlockArow)
+        {
+            if (i.State == StateBlock.LockCount)
+            {
+                BlockLockCount.Add(i);
+            }
+        }
         for (int i = block.transform.childCount - 1; i >= block.transform.childCount - takeCount; i--)
         {
             Transform child = block.transform.GetChild(i);
             children.Add(child);
         }
-
         for (int i = 0; i < children.Count; i++)
         {
             if (children[i] != null)
             {
                 Particle.transform.position = children[i].position;
                 yield return children[i].DOScale(Vector3.zero, 0.06f).WaitForCompletion();
+                for (int k = BlockLockCount.Count - 1; k >= 0; k--)
+                {
+                    var j = BlockLockCount[k];
+                    j.NumberLockCount--;
+                    j.TextLockCount.text = j.NumberLockCount.ToString();
+
+                    if (j.NumberLockCount == 0)
+                    {
+                        GamePlayManager.Ins.DelayCheck.Add(BlockLockCount[k].PosionBlock);
+                        BlockLockCount[k].BackNomal();
+                        BlockLockCount.RemoveAt(k);
+
+                    }
+                }
+
+
                 LeanPool.Despawn(children[i]);
             }
 
         }
         Destroy(Particle);
-        //Destroy(Particle);
         Data.gamePlayManager.CurrenScore += children.Count;
         UIManager.Ins.GetUI<GameplayUI>().SetFillScore(Data.gamePlayManager.CurrenScore, Data.gameManager.MaxCurrenScore);
-
         UIManager.Ins.GetUI<GameplayUI>().SetTextScore(Data.gamePlayManager.CurrenScore.ToString() + "/" + Data.gameManager.MaxCurrenScore.ToString());
         if (Data.gamePlayManager.CurrenScore >= Data.gameManager.MaxCurrenScore)
         {

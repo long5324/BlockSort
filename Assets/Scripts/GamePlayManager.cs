@@ -3,12 +3,14 @@ using Lean.Pool;
 using System.Collections.Generic;
 using System.ComponentModel;
 using Unity.VisualScripting;
+using UnityEditor.Search;
 using UnityEngine;
 using UnityEngine.Rendering.UI;
 using static UnityEngine.GraphicsBuffer;
 
 public class GamePlayManager : Singleton<GamePlayManager>
 {
+    public Material MaterialDF;
     public Material LightMaterial;
     public List<BlockControl> BottomBlock { get; set; }
     public List<GameObject> ListBlockGamePlay { get; set; }
@@ -25,12 +27,14 @@ public class GamePlayManager : Singleton<GamePlayManager>
     public bool StartScaleScore { get; set; } = false;
     public int CurrenScore { get; set; } = 0;
     public int ScorePluss { get; set; } = 0;
+    
     public Vector3 baseScale { get; private set; } = new Vector3(0.9f, 0.9f, 0.9f);
     private float referenceWidth = 1080f;
     private float referenceHeight = 2280f;
     private bool pause = false;
-    DataInport Data;
+    private List<BlockControl> ListBlockLock = new List<BlockControl>();
 
+    DataInport Data;
     public LayerMask BlockLM;
 
     private void Start()
@@ -39,6 +43,19 @@ public class GamePlayManager : Singleton<GamePlayManager>
         Application.targetFrameRate = 60;
         AdjustScaleToScreen();
         cam = Camera.main;
+
+    }
+    public void UpdateListBlockLock()
+    {
+        ListBlockLock.Clear();
+        foreach (var i in BottomBlock)
+        {
+            if (i.State == StateBlock.Lock)
+            {
+                ListBlockLock.Add(i);
+               
+            }
+        }
     }
     public void SetUpChangeLevel()
     {
@@ -51,6 +68,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         {
             BottomBlock.Add(i.GetComponent<BlockControl>());
         }
+      
     }
     private void Update()
     {
@@ -59,13 +77,15 @@ public class GamePlayManager : Singleton<GamePlayManager>
         if (selectedBlock == null && Input.GetMouseButtonDown(0))
         {
             TargetBlockPlay();
+            CheckUnLockBlock();
         }
         if (selectedBlock != null && Input.GetMouseButton(0))
         {
             CheckBottomBlock();
         }
         if (Input.GetMouseButtonUp(0))
-        { 
+        {
+           
             SetAllDefaut();
             EndClicK();
         }
@@ -111,29 +131,23 @@ public class GamePlayManager : Singleton<GamePlayManager>
             return;
         }
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
-        Debug.Log("Click");
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, BlockLM))
         {
             selectedBlock = hit.collider.gameObject.GetComponent<ObjectSet>();
         }
     }
-    private GameObject previousBlock;
 
     void CheckBottomBlock()
     {
         Ray ray = cam.ScreenPointToRay(Input.mousePosition + new Vector3(0,150,0));
-        Debug.Log(Input.mousePosition);
         RaycastHit hit;
-
         if (Physics.Raycast(ray, out hit, 100f, LayerMask.GetMask("GridBlock")))
         {
             if(hit.collider == null) return;
             GameObject bottomBlockObject = hit.collider.gameObject;
             Vector3 targetPos = hit.point;
-            targetPos.y = hit.point.y + 2f;
-
+            targetPos.y = hit.point.y + 0.5f;
             selectedBlock.transform.position = targetPos ;
-
             if (TargetBlock == null )
             {
                 TargetBlock = hit.collider.gameObject.GetComponent<BlockControl>();
@@ -147,19 +161,53 @@ public class GamePlayManager : Singleton<GamePlayManager>
                 else
                 {
                     TargetBlock.BacktoDFColor();
-                    TargetBlock = hit.collider.gameObject.GetComponent<BlockControl>();
-                   
+                    BlockControl Check = hit.collider.gameObject.GetComponent<BlockControl>();
+                    if (Check != null)
+                    {
+                        TargetBlock = Check;
+                    }
+                    if (TargetBlock.State == StateBlock.Lock)
+                        return;
                     TargetBlock.SetColor(LightMaterial);
-
                     if (TargetBlock.transform.childCount > 0)
                     {
                         TargetBlock.BacktoDFColor();
                     }
                 }
-
             }
-        }     
+        }
     }
+    private void CheckUnLockBlock()
+    {
+        if (ListBlockLock.Count == 0) return;
+        Debug.Log(1);
+        Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+
+        if (Physics.Raycast(ray, out hit, 100f, LayerMask.GetMask("Lock")))
+        { 
+            BlockControl target = null;
+            foreach (var i in ListBlockLock)
+            {
+                if (i.gameObject == hit.collider.gameObject)
+                {
+                    target = i;
+                    break;
+                }
+            }
+
+            if (target != null)
+            {
+                target.State = StateBlock.Nomal;
+                target.BacktoDFColor();
+                Destroy(target.GameObjectMod.gameObject);
+                target.GameObjectMod = null;
+                target.gameObject.layer = 3;
+                ListBlockLock.Remove(target);
+            }
+        }
+    }
+
     public bool CheckLost()
     {
         foreach(var i in BottomBlock)
@@ -206,8 +254,6 @@ public class GamePlayManager : Singleton<GamePlayManager>
         if (P == null) {return; }
         List<BlockControl> ListBlock = P.CheckArow();
         if (ListBlock == null || ListBlock.Count == 0) return;
-        
-         
             if (ListBlock.Count == 1)
             {
                 Data.animationControl.AddAni(ListBlock[0], P);
@@ -239,11 +285,12 @@ public class GamePlayManager : Singleton<GamePlayManager>
         }
         SetBlock();
         selectedBlock = null;
+        TargetBlock = null;
     }
 
     void SetBlock()
     {
-        if (selectedBlock == null || TargetBlock == null || TargetBlock.transform.childCount >0) return;
+        if (selectedBlock == null || TargetBlock == null || TargetBlock.transform.childCount >0 || TargetBlock.State == StateBlock.Lock) return;
         for(int i=0; i < selectedBlock.ListChildBlock.Count; i++)
         {
             selectedBlock.ListChildBlock[i].transform.SetParent(TargetBlock.transform);

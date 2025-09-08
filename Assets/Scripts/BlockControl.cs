@@ -1,6 +1,7 @@
 ﻿
 using Sirenix.OdinInspector;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UIElements;
 [System.Serializable]
@@ -9,30 +10,50 @@ public class BlockLevelDefaut
     public BlockColor Color;
     public int NumberSpawm;                            
 }
+[System.Serializable]
+public enum StateBlock
+{
+    none,
+    Nomal,
+    Lock,
+    LockCount
+
+}
 public class BlockControl : MonoBehaviour
 {
     [Header("SupportSaveLevel")]
     public List<BlockLevelDefaut> DataSpawn = new List<BlockLevelDefaut>();
-
     public List<ChildBlock> ListChildBlock ;
-    public bool Tagert { get; set; }
     public Vector3 PosionBlock ;
     public Renderer Renderer { get; set; }
     [SerializeField] public List< BlockControl >BlockLink = new List<BlockControl> ();
-    Material MaterialDF { get; set; }
+    public StateBlock State = StateBlock.Nomal;
+    [ShowIf("IsLocked")]
+    public GameObject GameObjectMod ;
+    [ShowIf("State", StateBlock.LockCount)]
+    public int NumberLockCount = 3;
+    [ShowIf("State", StateBlock.LockCount)]
+    public TextMeshProUGUI TextLockCount ;
     private void Start()
     {
         Renderer = GetComponent<Renderer>();
-        MaterialDF = Renderer.material;
     }
     public void SetColor(Material material)
     {
         Renderer.material = material;
     }
+    private bool IsLocked()
+    {
+        return State == StateBlock.Lock || State == StateBlock.LockCount;
+    }
     public void BacktoDFColor()
     {
-        if (Renderer == null) return;
-        Renderer.material = MaterialDF;
+        if (Renderer == null)
+        {
+            GetComponent<Renderer>().material = GamePlayManager.Ins.MaterialDF;
+            return;
+        }
+        Renderer.material = GamePlayManager.Ins.MaterialDF;
     }
     public BlockColor CheckColor()
     {
@@ -47,17 +68,12 @@ public class BlockControl : MonoBehaviour
     }
     public int GetNumberSameColor()
     {
-        // Nếu list rỗng thì trả về 0
         if (ListChildBlock == null || ListChildBlock.Count == 0)
             return 0;
 
         int count = 0;
         int index = ListChildBlock.Count - 1;
-
-        // Lấy màu cuối cùng (chắc chắn tồn tại vì đã check count > 0)
         BlockColor color = ListChildBlock[index].CurrenColor;
-
-        // Đếm ngược các block có cùng màu
         while (index >= 0 && ListChildBlock[index] != null && ListChildBlock[index].CurrenColor == color)
         {
             count++;
@@ -78,17 +94,33 @@ public class BlockControl : MonoBehaviour
     [Button(ButtonSizes.Large)]
     public void SpawnBlockChild()
     {
+        if (State == StateBlock.Lock && transform.childCount == 0) return;
+        if (State == StateBlock.Lock) {
+            DataSpawn.Clear();
+                }
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
-
+           
             if (!Application.isPlaying)
+            {
+                if (transform.GetChild(i).gameObject.layer == 9 )
+                {
+                    continue;
+                }
                 DestroyImmediate(transform.GetChild(i).gameObject);
+            }
             else
-                Destroy(transform.GetChild(i).gameObject);
+            {
+                if (transform.GetChild(i).gameObject.layer == 9)
+                {
+                    continue;
+                }
 
-            ListChildBlock.Clear();
+                Destroy(transform.GetChild(i).gameObject);
+            }
         }
-        foreach(var i in DataSpawn)
+        ListChildBlock.Clear();
+        foreach (var i in DataSpawn)
         {
             for(int j = 0;j < i.NumberSpawm; j++)
             {
@@ -110,7 +142,13 @@ public class BlockControl : MonoBehaviour
             if (!Application.isPlaying)
                 DestroyImmediate(transform.GetChild(i).gameObject);
             else
+            {
+                if (transform.GetChild(i).gameObject.layer == 9)
+                {
+                    continue;
+                }
                 Destroy(transform.GetChild(i).gameObject);
+            }
 
             ListChildBlock.Clear();
         }
@@ -130,12 +168,18 @@ public class BlockControl : MonoBehaviour
             }
         }
     }
+    public void BackNomal()
+    {
+        State = StateBlock.Nomal;
+        gameObject.layer = 3;
+        Destroy(GameObjectMod.gameObject);
+    }
     public void UpdateDataSpawn()
     {
         if (ListChildBlock == null || ListChildBlock.Count == 0)
             return;
 
-        DataSpawn.Clear(); // tránh cộng dồn dữ liệu cũ
+        DataSpawn.Clear();
 
         int CurrenCheck = 0;
         BlockColor CurrenColor = ListChildBlock[0].CurrenColor;
@@ -149,21 +193,16 @@ public class BlockControl : MonoBehaviour
             }
             else
             {
-                // Lưu nhóm cũ
                 BlockLevelDefaut Df = new BlockLevelDefaut();
                 Df.Color = CurrenColor;
                 Df.NumberSpawm = count;
                 DataSpawn.Add(Df);
-
-                // Reset cho nhóm mới
                 CurrenColor = ListChildBlock[CurrenCheck].CurrenColor;
                 count = 1;
             }
 
             CurrenCheck++;
         }
-
-        // 🔥 Đừng quên add nhóm cuối cùng
         BlockLevelDefaut last = new BlockLevelDefaut();
         last.Color = CurrenColor;
         last.NumberSpawm = count;
@@ -194,7 +233,6 @@ public class BlockControl : MonoBehaviour
     public BlockControl(BlockControl bc)
     {
      ListChildBlock = bc.ListChildBlock;
-     Tagert = bc.Tagert;
      PosionBlock = bc.PosionBlock;
      Renderer  = bc.Renderer;
      BlockLink = bc.BlockLink;
@@ -207,9 +245,9 @@ public class BlockControl : MonoBehaviour
         {
             if (i != null && CheckColor() == i.CheckColor() && i.CheckColor() != BlockColor.None )
             {
+                if(i.State == StateBlock.Nomal)
                 ListBlock.Add(i);
             }
-
         }
         return ListBlock;
     }

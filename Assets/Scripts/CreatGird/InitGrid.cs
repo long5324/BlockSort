@@ -5,6 +5,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Net.WebSockets;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
@@ -12,23 +14,25 @@ using UnityEngine.SocialPlatforms;
 
 public class InitGrid : MonoBehaviour 
 {
-    public float  sizeGrid = 1;
-    public int NumberInit = 4;
-    public int numberRandom = 6;
-    public Vector3 DefaultCenter ;
-    public bool DrawGrid=false ;
-    [SerializeField] List<Vector3> CenterGird = new List<Vector3>();
-    public  List<BlockControl> ListblockGround  = new List<BlockControl>();
-    GamePlayManager gamePlayManager;
-    GameManager gameManager;
-
-   
-
+    [SerializeField] float  sizeGrid = 1;
+    [SerializeField] int numberRandom = 6;
+    [SerializeField] bool DrawGrid=false ;
+    [SerializeField] Material MaterialLock;
+    [SerializeField] GameObject ObjectPrefabLock;
+    [SerializeField] GameObject ObjectPrefabLockCount;
+    public List<BlockControl> ListblockGround = new List<BlockControl>();
+    private List<Vector3> CenterGird = new List<Vector3>();
+    int NumberInit = 10;
     private void Start()
     {
-        foreach(Transform i in transform)
+        foreach (Transform i in transform)
         {
-            i.GetComponent<BlockControl>().SpawnBlockChildWithBool();
+            BlockControl bc = i.GetComponent<BlockControl>();
+            if (bc != null)
+            {
+                if (bc.State == StateBlock.Lock) continue;
+                bc.SpawnBlockChildWithBool();
+            }
         }
     }
     [Button(ButtonSizes.Large)]
@@ -38,7 +42,6 @@ public class InitGrid : MonoBehaviour
         CenterGird.Add(Vector3.zero);
         List<Vector3> frontier = new List<Vector3>();
         frontier.Add(Vector3.zero);
-
         float halfSize = sizeGrid / 2f;
 
         for (int step = 0; step < NumberInit; step++)
@@ -63,12 +66,18 @@ public class InitGrid : MonoBehaviour
                         neighbors.RemoveAt(k);
                     }
                 }
-
                 CenterGird.AddRange(neighbors);
                 newFrontier.AddRange(neighbors);
             }
 
-            frontier = newFrontier; // cập nhật frontier cho bước tiếp theo
+            frontier = newFrontier; 
+        }
+      
+        foreach(var i in ListblockGround)
+        {
+         
+          
+            i.SpawnBlockChild();
         }
         SetupBlock();
     }
@@ -81,6 +90,7 @@ public class InitGrid : MonoBehaviour
     public void ClearData()
     {
         ClearChildren(transform);
+        
     }
 
     private void ClearChildren(Transform parent)
@@ -91,14 +101,15 @@ public class InitGrid : MonoBehaviour
             BlockControl bc = child.GetComponent<BlockControl>();
             if (bc != null)
             {
+                
                 bc.DataSpawn.Clear();
                 bc.ListChildBlock.Clear();
+                bc.State = StateBlock.Nomal;
+                bc.BacktoDFColor();
             }
             for (int j = child.childCount - 1; j >= 0; j--)
             {
                 Transform grandChild = child.GetChild(j);
-
-               
                 if (Application.isPlaying)
                     Destroy(grandChild.gameObject);
                 else
@@ -111,8 +122,6 @@ public class InitGrid : MonoBehaviour
     public void RandomSpawn()
     {
         ClearData();
-        gamePlayManager = GamePlayManager.Ins;
-        gameManager = GameManager.Ins;
         List<Transform> pickedChildren = GetRandomChildren(transform, numberRandom);
 
         for (int i = 0; i < pickedChildren.Count; i++)
@@ -120,7 +129,7 @@ public class InitGrid : MonoBehaviour
             BlockControl block = pickedChildren[i].GetComponent<BlockControl>();
             if (block == null) continue;
             int colorIndex = Random.Range(0, 7);
-            BlockColor color = gameManager.BlockData.BlockDataBase[colorIndex].Color;
+            BlockColor color = GameManager.Ins.BlockData.BlockDataBase[colorIndex].Color;
 
             int countBlock = Random.Range(2, 7);
             List<Transform> ObjectGame = new List<Transform>();
@@ -137,7 +146,7 @@ public class InitGrid : MonoBehaviour
                     ObjectGame[j].gameObject.SetActive(true);
                     ObjectGame[j].transform.SetParent(block.transform);
                     ObjectGame[j].transform.localRotation = Quaternion.identity;
-                    ObjectGame[j].transform.localPosition = new Vector3(0, gamePlayManager.sizeYBlock * (j+1), 0);
+                    ObjectGame[j].transform.localPosition = new Vector3(0, GamePlayManager.Ins.sizeYBlock * (j+1), 0);
                     ObjectGame[j].transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
 
                     // lưu vào danh sách con của block
@@ -180,11 +189,16 @@ public class InitGrid : MonoBehaviour
 
     void ChangePositonGround()
     {
-        ListblockGround.Clear();  // reset list trước
+        ListblockGround.Clear();
         List<Vector3> usedPositions = new List<Vector3>(); // danh sách vị trí đã dùng
-
+        
         foreach (Transform i in transform)
         {
+            BlockControl bcComponent = i.GetComponent<BlockControl>();
+            if (bcComponent == null)
+            {
+                continue;
+            }
             Vector3 local = i.localPosition;
             float Distance = float.MaxValue;
             Vector3 newPosition = local;
@@ -202,24 +216,60 @@ public class InitGrid : MonoBehaviour
             }
 
             i.localPosition = new Vector3(newPosition.x, 0, newPosition.z);
-
-            BlockControl bcComponent = i.GetComponent<BlockControl>();
             if (bcComponent != null)
             {
+                if (bcComponent.GameObjectMod != null)
+                {
+                    DestroyImmediate(bcComponent.GameObjectMod.gameObject);
+                    bcComponent.GameObjectMod = null;
+                }
                 bcComponent.PosionBlock = i.localPosition;
                 bcComponent.ClearLink();
-
-                ListblockGround.Add(bcComponent);
+                if(bcComponent.State == StateBlock.none)
+                {
+                   
+                    bcComponent.State = StateBlock.Nomal;
+                }
+                if(bcComponent.State == StateBlock.Lock)
+                {
+                    bcComponent.GetComponent<Renderer>().material = MaterialLock;
+                    bcComponent.gameObject.layer = LayerMask.NameToLayer("Lock");
+                    GameObject ObjectLock =  Instantiate(ObjectPrefabLock, Vector3.zero, Quaternion.identity);
+                    ObjectLock.transform.SetParent(bcComponent.transform,true);
+                    ObjectLock.transform.localScale = new Vector3(0.01f, 0.01f, bcComponent.transform.localScale.z);
+                    ObjectLock.transform.rotation = Quaternion.Euler(90, 0, 0);
+                    ObjectLock.transform.localPosition = Vector3.zero + new Vector3(0,0.003f,0);
+                    bcComponent.GameObjectMod = ObjectLock;
+                }
+                else if(bcComponent.State == StateBlock.Nomal)
+                {
+                    bcComponent.gameObject.layer = 3;
+                    bcComponent.BacktoDFColor();
+                }
+                else if(bcComponent.State == StateBlock.LockCount)
+                {
+                    bcComponent.gameObject.layer = LayerMask.NameToLayer("Lock");
+                    GameObject ObjectLock = Instantiate(ObjectPrefabLockCount, Vector3.zero, Quaternion.identity);
+                    ObjectLock.transform.SetParent(bcComponent.transform, true);
+                    ObjectLock.transform.localScale = new Vector3(0.015f, 0.015f, bcComponent.transform.localScale.z);
+                    ObjectLock.transform.rotation = Quaternion.Euler(90, 0, 0);
+                    int NumberBlock = 0;
+                    foreach(BlockLevelDefaut j in bcComponent.DataSpawn)
+                    {
+                        NumberBlock += j.NumberSpawm;
+                    }
+                    ObjectLock.transform.localPosition = Vector3.zero + new Vector3(0, (NumberBlock+1)*GamePlayManager.Ins.sizeYBlock , 0);
+                    bcComponent.TextLockCount = bcComponent.GetComponentInChildren<TextMeshProUGUI>();
+                    bcComponent.TextLockCount.text = bcComponent.NumberLockCount.ToString();
+                    bcComponent.GameObjectMod = ObjectLock;
+                }
+                    ListblockGround.Add(bcComponent);
             }
 
-            usedPositions.Add(newPosition); // đánh dấu vị trí đã được sử dụng
+            usedPositions.Add(newPosition);
         }
-
-
         LinkGroud();
     }
-
-  
     void LinkGroud()
     {
         foreach(Transform i in gameObject.transform)
@@ -299,7 +349,7 @@ public class InitGrid : MonoBehaviour
         Gizmos.color = UnityEngine.Color.red;
 
         foreach (var i in CenterGird) {
-            DrawRect(i+DefaultCenter, sizeGrid, sizeGrid);
+            DrawRect(i, sizeGrid, sizeGrid);
         }
     }
     void DrawRect(Vector3 center, float width, float height)
