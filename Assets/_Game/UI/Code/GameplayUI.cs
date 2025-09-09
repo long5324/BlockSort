@@ -35,7 +35,6 @@ public class GameplayUI : UICanvas
     }
     public void ReRollButtonEvent()
     {
-        Debug.Log("ClickRoll");
         GameManager.Ins.Rerool();
     }
     public override void Close(float delayTime)
