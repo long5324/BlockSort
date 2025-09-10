@@ -29,6 +29,8 @@ public class GameManager : Singleton<GameManager>
     public Block BlockData;
     public GameObject GamePlay;
     private DataInport Data;
+    public GameObject CurrenGamePlay;
+    public GameObject PanelGamePlay;
     public InitGrid CurrenGridLevel { get; set; }
     private void Start()
     {
@@ -45,7 +47,9 @@ public class GameManager : Singleton<GameManager>
     }
     public void SetUpLevel(int Number )
     {
-        UIManager.Ins.OpenUI<GameplayUI>();
+        UIManager.Ins.GetUI<GameplayUI>().Open();
+        UIManager.Ins.GetUI<GameplayUI>().StartIntro();
+
         AnimationControl.Ins.ResetStateAnimationControl();
         foreach (var i in ListGameLever)
         {
@@ -53,12 +57,12 @@ public class GameManager : Singleton<GameManager>
             {
                 CurrenNumberLevel = Number;
                 CurrenLevel = Instantiate(i.GameObjectLevel, Vector3.zero, Quaternion.identity);
-                GameObject GamePlayy = Instantiate(GamePlay, Vector3.zero, Quaternion.identity);
+                CurrenGamePlay = Instantiate(GamePlay, Vector3.zero, Quaternion.identity);
                 CurrenLevel.transform.SetParent(LevelGame.transform, false);
-                GamePlayy.transform.SetParent(LevelGame.transform, false);
+                CurrenGamePlay.transform.SetParent(LevelGame.transform, false);
                 List<GameObject> ListBlockGamePlay= new List<GameObject>();
                 List<Vector3> DefaulP = new List<Vector3>();
-                foreach (Transform j in GamePlayy.transform)
+                foreach (Transform j in CurrenGamePlay.transform)
                 {
                     ListBlockGamePlay.Add(j.gameObject);
                     DefaulP.Add(j.position);
@@ -74,6 +78,8 @@ public class GameManager : Singleton<GameManager>
         UpdateScore();
         GamePlayManager.Ins.UpdateListBlockLock();
         CurrenGridLevel = CurrenLevel.GetComponent<InitGrid>();
+        string NumberLevelName = "Level " + CurrenNumberLevel.ToString();
+        UIManager.Ins.GetUI<GameplayUI>().SetupLevel(NumberLevelName, MaxCurrenScore.ToString());
     }
 
     public void BackToHome()
@@ -124,13 +130,13 @@ public class GameManager : Singleton<GameManager>
             if (i.NumberLever == CurrenNumberLevel)
             {
                 CurrenLevel = Instantiate(i.GameObjectLevel, Vector3.zero, Quaternion.identity);
-                GameObject GamePlayy = Instantiate(GamePlay, Vector3.zero, Quaternion.identity);
+                CurrenGamePlay = Instantiate(GamePlay, Vector3.zero, Quaternion.identity);
 
                 CurrenLevel.transform.SetParent(LevelGame.transform, false);
-                GamePlayy.transform.SetParent(LevelGame.transform, false);
+                CurrenGamePlay.transform.SetParent(LevelGame.transform, false);
                 List<GameObject> ListBlockGamePlay = new List<GameObject>();
                 List<Vector3> DefaulP = new List<Vector3>();
-                foreach (Transform j in GamePlayy.transform)
+                foreach (Transform j in CurrenGamePlay.transform)
                 {
                     ListBlockGamePlay.Add(j.gameObject);
                     DefaulP.Add(j.position);
@@ -139,6 +145,7 @@ public class GameManager : Singleton<GameManager>
                 Data.gamePlayManager.BottomBlock = CurrenLevel.GetComponent<InitGrid>().ListblockGround;
                 Data.gamePlayManager.ListBlockGamePlay = ListBlockGamePlay;
                 Data.gamePlayManager.RandomSpawnBlockChild();
+                CurrenGridLevel = CurrenLevel.GetComponent<InitGrid>();
                 break;
             }
         }

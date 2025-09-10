@@ -6,11 +6,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Net.WebSockets;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static Unity.VisualScripting.Metadata;
 
 public class Animation : Singleton<Animation>
 {
@@ -142,6 +144,7 @@ public class Animation : Singleton<Animation>
             .SetLoops(-1, LoopType.Yoyo) 
             .SetEase(Ease.InOutSine);  
     }
+    Vector3 SalceCahe;
     List<BlockControl> CheckList = new List<BlockControl>();
     public IEnumerator PlusScore(BlockControl block, int score, float delay, bool c)
     {
@@ -158,55 +161,90 @@ public class Animation : Singleton<Animation>
             
             children.Add(child);
         }
-        for (int i = 0; i < children.Count; i++)
+        BlockControl bc = null;
+        foreach (var j in BlockArow)
         {
-            if (children[i] != null)
+            if (j.State == StateBlock.Support)
             {
-                Particle.transform.position = children[i].position;
-                yield return children[i].DOScale(Vector3.zero, 0.06f).WaitForCompletion();
-                LeanPool.Despawn(children[i]);
-                block.ListChildBlock[block.ListChildBlock.Count - 1 - i].SetDefaultBlockChild();
-
+                SalceCahe = j.transform.localScale;
+                bc = j; break;
             }
         }
-        Destroy(Particle);
-        Data.gamePlayManager.CurrenScore += children.Count;
-        UIManager.Ins.GetUI<GameplayUI>().SetFillScore(Data.gamePlayManager.CurrenScore, Data.gameManager.MaxCurrenScore);
-        UIManager.Ins.GetUI<GameplayUI>().SetTextScore(Data.gamePlayManager.CurrenScore.ToString() + "/" + Data.gameManager.MaxCurrenScore.ToString());
-        if (Data.gamePlayManager.CurrenScore >= Data.gameManager.MaxCurrenScore)
-        {
-            Data.gameManager.Winlevel();
-        }
-        Data.animationControl.ChangeInDataBlockControl(block.PosionBlock);
-    
-        AddCheck(block.PosionBlock);
-        CheckList.Add(block);
-        if (c)
-        {
-            Data.animationControl.ScorePlus = false;
-        }
-        foreach (var i in BlockArow)
-        {
-            if (i.State == StateBlock.LockCount)
+        if (bc != null) Squash(bc, 0.06f * children.Count);
+            for (int i = 0; i < children.Count; i++)
             {
-                GameManager.Ins.CurrenGridLevel.SpawnEffect(i);
-                i.DeleteLockCount();
-                GamePlayManager.Ins.ShakeObject(i.transform);
-                if (i.CheckCount() == 1)
+                if (children[i] != null)
                 {
-                    GamePlayManager.Ins.ShakeObject(i.transform);
-                    i.BackNomal();
-                    i.SetColor(GamePlayManager.Ins.MaterialDF);
-                    Destroy(i.transform.GetChild(0));
+                    Particle.transform.position = children[i].position;
+                    yield return children[i].DOScale(Vector3.zero, 0.06f).WaitForCompletion();
+                    LeanPool.Despawn(children[i]);
+                    block.ListChildBlock[block.ListChildBlock.Count - 1 - i].SetDefaultBlockChild();
                 }
             }
-            else if(i.State == StateBlock.Support)
+            GamePlayManager.Ins.UpdateSocre(children.Count);
+            Destroy(Particle);
+            Data.animationControl.ChangeInDataBlockControl(block.PosionBlock);
+            AddCheck(block.PosionBlock);
+            CheckList.Add(block);
+            if (c)
             {
-                BlockControl Bc = ChooseRandomBlock();
-                GamePlayManager.Ins.EventSupport(i, Bc);
+                Data.animationControl.ScorePlus = false;
             }
+            foreach (var i in BlockArow)
+            {
+                if (i.State == StateBlock.LockCount)
+                {
+                    GameManager.Ins.CurrenGridLevel.SpawnEffect(i);
+                    i.DeleteLockCount();
+                    GamePlayManager.Ins.ShakeObject(i.transform);
+                    if (i.CheckCount() == 1)
+                    {
+                        GamePlayManager.Ins.ShakeObject(i.transform);
+                        i.BackNomal();
+                        i.SetColor(GamePlayManager.Ins.MaterialDF);
+                        Destroy(i.transform.GetChild(0));
+                    }
+                }
+                else if (i.State == StateBlock.Support)
+                {
+                    Stretch(i);
+
+                }
+            
         }
     }
+    // Hàm nén
+    public Tween Squash(BlockControl targetTransform , float time)
+    {
+        Vector3 originalScale = targetTransform.transform.localScale;
+
+        // Scale nén xuống (chỉ bé trục Y, phình trục X/Z cho cảm giác mềm mại)
+        Vector3 squashScale = new Vector3(
+            originalScale.x * 1.2f,
+            originalScale.y * 0.5f,
+            originalScale.z * 1.2f
+        );
+
+        return targetTransform.transform
+            .DOScale(squashScale, time)
+            .SetEase(Ease.InQuad);
+    }
+
+    // Hàm bật ra
+    public Tween Stretch(BlockControl targetTransform)
+    {
+        return targetTransform.transform
+            .DOScale(SalceCahe, 0.2f)
+            .SetEase(Ease.OutBounce)
+            .OnComplete(() =>
+            {
+                // Chạy event sau khi bật ra
+                BlockControl Bc = ChooseRandomBlock();
+                GamePlayManager.Ins.EventSupport(targetTransform, Bc);
+            });
+    }
+
+
 
     public BlockControl ChooseRandomBlock()
     {

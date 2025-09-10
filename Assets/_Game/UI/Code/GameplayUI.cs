@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using DG.Tweening;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -8,13 +9,53 @@ public class GameplayUI : UICanvas
 {
     [SerializeField] Image FillScore;
     [SerializeField] TextMeshProUGUI TextScore;
-    [SerializeField] Button SettingButton;
-    [SerializeField] Button ReRollButton;
+    public Button SettingButton;
+    public Button ReRollButton;
+    public Button DestroyBlock;
+    public Button ChangeBlockButton;
+    public RectTransform BarTransform;
+    [Header("Introduce Boosters")]
+    public RectTransform PanelIntroduceBoosters;
+    public Button CannelBoosters;
+    public TextMeshProUGUI TextTileBoosters;
+    public TextMeshProUGUI MainText;
+    public List<RectTransform> TranformButtonBoosters;
+    [Header("Introduce")]
+    public RectTransform PobUpStart;
+    public TextMeshProUGUI TextLevel;
+    public TextMeshProUGUI TextScoreIntro;
+    public IEnumerator WaitStartIntro()
+    {
+        yield return new WaitForSeconds(0.5f);
+        PobUpStart.DOAnchorPos3DX(0, 0.7f);
+        StartCoroutine(WaitEndIntro());
+    }
+    public IEnumerator WaitEndIntro()
+    {
+        yield return new WaitForSeconds(2f);
+        BarTransform.DOAnchorPos3DY(-200, 0.7f);
+        PobUpStart.DOAnchorPos3DX(1500, 0.7f);
+        GamePlayManager.Ins.SetPause(false);
+    }
+   public void SetupLevel(string nameLevel , string Score)
+    {
+        TextLevel.text = nameLevel;
+        TextScoreIntro.text = Score;
+    }
     private void Awake()
     {
         SettingButton.onClick.AddListener(SettingEvent);
         ReRollButton.onClick.AddListener(ReRollButtonEvent);
+        DestroyBlock.onClick.AddListener(EventDestroyBlock);
+        CannelBoosters.onClick.AddListener(EventEndBooster);
+        ChangeBlockButton.onClick.AddListener(EventChangeBlock);
+
+        TranformButtonBoosters.Add(ReRollButton.GetComponent<RectTransform>());
+        TranformButtonBoosters.Add(DestroyBlock.GetComponent<RectTransform>());
+        TranformButtonBoosters.Add(ChangeBlockButton.GetComponent<RectTransform>());
+       
     }
+
     public void SetFillScore(float CurrenScore, float MaxScore)
     {
         FillScore.fillAmount = CurrenScore/MaxScore;
@@ -28,10 +69,43 @@ public class GameplayUI : UICanvas
         Close(0f);
         UIManager.Ins.GetUI<SettingUi>().Open();
     }
-    public override void Open()
+    public void StartIntro()
     {
-
+        BarTransform.anchoredPosition = new Vector2(0, 150);
+        PobUpStart.anchoredPosition = new Vector2(-1500, 0);
+        GamePlayManager.Ins.SetPause(true);
+        StartCoroutine(WaitStartIntro());
+    }
+    public override void Open()
+    { 
         base.Open();
+       
+    }
+    public void ChangeTextPanel(string tile , string maintext)
+    {
+        TextTileBoosters.text = tile;
+        MainText.text = maintext;
+    }
+    public void EventDestroyBlock()
+    {
+        string tile = "Breaker Booster";
+        string main = "Choose the block you want to destroy";
+        ChangeTextPanel(tile, main);
+        GamePlayManager.Ins.SetUpBooster();
+        GamePlayManager.Ins.StateBooter = Boosters.DestroyBlock;
+    }
+    public void EventEndBooster()
+    {
+        GamePlayManager.Ins.EndBoosters();
+        GamePlayManager.Ins.StateBooter = Boosters.None;
+    }
+    public void EventChangeBlock()
+    {
+        string tile = "Change position";
+        string main = "Select the block you want to move";
+        ChangeTextPanel(tile, main);
+        GamePlayManager.Ins.SetUpBooster();
+        GamePlayManager.Ins.StateBooter = Boosters.ChangeBlock;
     }
     public void ReRollButtonEvent()
     {
@@ -39,6 +113,7 @@ public class GameplayUI : UICanvas
     }
     public override void Close(float delayTime)
     {
+       
         base.Close(delayTime);
     }
    

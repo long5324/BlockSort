@@ -678,30 +678,6 @@ MonoBehaviour:
   warnings: 1
   spawnedClonesList:
   - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
   despawnedClones: []
   delays: []
   deactivatedChild: {fileID: 0}
@@ -1485,7 +1461,7 @@ MonoBehaviour:
   ListGameLever:
   - NumberLever: 1
     GameObjectLevel: {fileID: 4209166994653737605, guid: 8252d0db52d4ca34a85e5e60246754e4, type: 3}
-    ScoreMax: 100
+    ScoreMax: 1000
   - NumberLever: 2
     GameObjectLevel: {fileID: 4389247536864753126, guid: bbf1e375252610141b3eef148031da4d, type: 3}
     ScoreMax: 200
@@ -1532,6 +1508,8 @@ MonoBehaviour:
   LevelGame: {fileID: 543824218}
   BlockData: {fileID: 11400000, guid: 63cf925fbdcae274cad529fd505283ff, type: 2}
   GamePlay: {fileID: 3973784379412956517, guid: f974e9edeb47fe34595e238c62a8d3b8, type: 3}
+  CurrenGamePlay: {fileID: 0}
+  PanelGamePlay: {fileID: 1254352391}
 --- !u!4 &1892687473
 Transform:
   m_ObjectHideFlags: 0
@@ -1589,12 +1567,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GamePlayManager
   MaterialDF: {fileID: 2100000, guid: 0f14317089870ea49994b1e324a37461, type: 2}
   LightMaterial: {fileID: 2100000, guid: 13dbd584ae49ad24583fd351af9f197d, type: 2}
+  sizeYBlock: 0.00325
   MunberBlockEat: 11
-  MapGamePlay: {fileID: 0}
-  DataBlockChild: {fileID: 11400000, guid: 63cf925fbdcae274cad529fd505283ff, type: 2}
   BlockLM:
     serializedVersion: 2
     m_Bits: 64
+  EffectDestroyBlock: {fileID: 5711547139488797713, guid: 580a397110ae400449f87c669c122cf0, type: 3}
+  DataBlockChild: {fileID: 11400000, guid: 63cf925fbdcae274cad529fd505283ff, type: 2}
+  BlockChangeTg: {fileID: 0}
 --- !u!1 &2017240709
 GameObject:
   m_ObjectHideFlags: 0

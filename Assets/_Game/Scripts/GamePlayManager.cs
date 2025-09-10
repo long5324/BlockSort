@@ -1,5 +1,6 @@
 ﻿using DG.Tweening;
 using DG.Tweening.Core.Easing;
+using JetBrains.Annotations;
 using Lean.Pool;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -7,37 +8,48 @@ using Unity.VisualScripting;
 using UnityEditor.Search;
 using UnityEngine;
 using UnityEngine.Rendering.UI;
+using UnityEngine.UIElements;
 using static UnityEngine.GraphicsBuffer;
-
+[System.Serializable]
+public enum Boosters
+{
+    None,
+    DestroyBlock,
+    ChangeBlock
+}
 public class GamePlayManager : Singleton<GamePlayManager>
 {
+    [Header("Material")]
     public Material MaterialDF;
     public Material LightMaterial;
-    public List<BlockControl> BottomBlock { get; set; }
-    public List<GameObject> ListBlockGamePlay { get; set; }
-    public List<Vector3> ListDefaulPossitionBlockGamePlay { get; set; } = new List<Vector3>();
-    public List<Vector3> DelayCheck { get; set; } = new List<Vector3>();
-    public float sizeYBlock { get; set; } = 0.00325f;
+    [Header("Float")]
+    public float sizeYBlock = 0.00325f;
     public float MunberBlockEat = 10;
-    public GameObject MapGamePlay;
+    [Header("Layer Mash")] 
+    public LayerMask BlockLM; 
+    [Header("Other")]   
+    public ParticleSystem EffectDestroyBlock;
     public Block DataBlockChild;
-    Camera cam;
-    ObjectSet selectedBlock = null;
+    private Camera cam;
+    private ObjectSet selectedBlock = null;
     public BlockControl TargetBlock { get; set; }
     public int CountScaleScore { get; set; } = 0;
     public bool StartScaleScore { get; set; } = false;
     public int CurrenScore { get; set; } = 0;
     public int ScorePluss { get; set; } = 0;
-    
+    public List<BlockControl> BottomBlock { get; set; }
+    public List<GameObject> ListBlockGamePlay { get; set; }
+    public List<Vector3> ListDefaulPossitionBlockGamePlay { get; set; } = new List<Vector3>();
+    public List<Vector3> DelayCheck { get; set; } = new List<Vector3>();
+    public GameObject MapGamePlay { get; set; }
     public Vector3 baseScale { get; private set; } = new Vector3(0.9f, 0.9f, 0.9f);
+    public Boosters StateBooter { get; set; }
     private float referenceWidth = 1080f;
     private float referenceHeight = 2280f;
     private bool pause = false;
+    private bool RunBoosters = false;
     private List<BlockControl> ListBlockLock = new List<BlockControl>();
-
-    DataInport Data;
-    public LayerMask BlockLM;
-
+    private DataInport Data;
     private void Start()
     {
         Data = DataInport.Ins;
@@ -73,6 +85,25 @@ public class GamePlayManager : Singleton<GamePlayManager>
     }
     private void Update()
     {
+        if (selectedBlock==null&&RunBoosters && !AnimationControl.Ins.IsRun && !AnimationControl.Ins.ScorePlus)
+        {
+            if(Input.GetMouseButtonDown(0))
+            CheckClickBoosters();
+        }else if(RunBoosters && selectedBlock!=null && !AnimationControl.Ins.IsRun && !AnimationControl.Ins.ScorePlus)
+        {
+            if (selectedBlock != null && Input.GetMouseButton(0))
+            {
+                CheckBottomBlock();
+            }
+            if (Input.GetMouseButtonUp(0))
+            {
+
+                SetAllDefaut();
+                EndClicK();
+                Destroy(ObjectP);
+                EndBoosters();
+            }
+        }
         if (pause) return;
        
         if (selectedBlock == null && Input.GetMouseButtonDown(0))
@@ -135,6 +166,55 @@ public class GamePlayManager : Singleton<GamePlayManager>
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, BlockLM))
         {
             selectedBlock = hit.collider.gameObject.GetComponent<ObjectSet>();
+        }
+    }
+    GameObject ObjectP;
+    private void CheckClickBoosters()
+    {
+        Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, 100f, LayerMask.GetMask("GridBlock")))
+        {
+           
+            BlockControl TargetBlock  =  hit.collider.gameObject.GetComponent<BlockControl>();
+            if (TargetBlock == null) return;
+            if (TargetBlock.State != StateBlock.Nomal) return;
+            if(TargetBlock.transform.childCount == 0) return;
+            if (StateBooter == Boosters.DestroyBlock)
+            {
+                RunBoostersBreackBlock(TargetBlock);
+                EndBoosters();
+                RunBoosters = false;
+            }
+            else if(StateBooter == Boosters.ChangeBlock)
+            {
+        
+                if (selectedBlock == null)
+                {
+                    ObjectP = new GameObject("GroupBlock");
+                    ObjectP.transform.SetParent(TargetBlock.transform.parent);
+                    ObjectP.transform.position = TargetBlock.transform.position;
+                    BlockChangeTg = TargetBlock;
+                    while (TargetBlock.transform.childCount > 0)
+                    {
+                        TargetBlock.transform.GetChild(0).SetParent(ObjectP.transform);
+                    }
+                    ObjectSet newObject = ObjectP.AddComponent<ObjectSet>();
+                    newObject.ListChildBlock.AddRange(TargetBlock.ListChildBlock);
+                    TargetBlock.ListChildBlock.Clear();
+                    selectedBlock = newObject;
+                }
+
+            }
+                
+        }
+    }
+    public void ClearChildren(Transform parent)
+    {
+        for (int i = parent.childCount - 1; i >= 0; i--)
+        {
+            GameObject child = parent.GetChild(i).gameObject;
+            Destroy(child);
         }
     }
 
@@ -236,6 +316,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
                 c = true;break;
             }
         }
+        Debug.Log(ListBlockGamePlay.Count);
         if (!c)
         {
             RandomSpawnBlockChild();    
@@ -285,9 +366,10 @@ public class GamePlayManager : Singleton<GamePlayManager>
             }
         else
         {
-          
+          if(!RunBoosters)
              for (int i = 0; i < ListBlockGamePlay.Count; i++)
             {
+
                 ListBlockGamePlay[i].transform.position = ListDefaulPossitionBlockGamePlay[i];
             }
         }
@@ -295,9 +377,13 @@ public class GamePlayManager : Singleton<GamePlayManager>
         selectedBlock = null;
         TargetBlock = null;
     }
-
+    public BlockControl BlockChangeTg;
     void SetBlock()
     {
+        if((TargetBlock == null || TargetBlock.transform.childCount > 0 || TargetBlock.State == StateBlock.Lock) && RunBoosters)
+        {
+            TargetBlock = BlockChangeTg;
+        }
         if (selectedBlock == null || TargetBlock == null || TargetBlock.transform.childCount >0 || TargetBlock.State == StateBlock.Lock) return;
         for(int i=0; i < selectedBlock.ListChildBlock.Count; i++)
         {
@@ -318,6 +404,16 @@ public class GamePlayManager : Singleton<GamePlayManager>
         selectedBlock.ListChildBlock.Clear();
         CheckGamePlay();
        
+    }
+    public void UpdateSocre(int NumberSocre)
+    {
+        CurrenScore += NumberSocre;
+        UIManager.Ins.GetUI<GameplayUI>().SetFillScore(CurrenScore, Data.gameManager.MaxCurrenScore);
+        UIManager.Ins.GetUI<GameplayUI>().SetTextScore(CurrenScore.ToString() + "/" + Data.gameManager.MaxCurrenScore.ToString());
+        if (CurrenScore >= Data.gameManager.MaxCurrenScore)
+        {
+            Data.gameManager.Winlevel();
+        }
     }
     public void RandomSpawnBlockChild()
     {
@@ -386,14 +482,6 @@ public class GamePlayManager : Singleton<GamePlayManager>
     
         return countScore;
     }
-    public void UpdateScore()
-    {
-        int scalse = (CountScaleScore / 5) + 1;
-        CurrenScore += scalse * ScorePluss;
-        UIManager.Ins.GetUI<GameplayUI>().SetFillScore(CurrenScore,Data.gameManager.MaxCurrenScore);
-        CountScaleScore = 0;
-        ScorePluss = 0;
-    }
     public void EventSupport(BlockControl BlockStart, BlockControl BlockEnd )
     {
         AnimationControl.Ins.IsRun = true;
@@ -411,6 +499,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         {
             i.transform.SetParent(BlockStart.transform);
             i.transform.localScale = new Vector3(0.9f,0.9f,0.9f);
+            i.transform.localRotation = Quaternion.identity;
             i.transform.localPosition = Vector3.zero;
             BlockStart.ListChildBlock.Add(i);
         }
@@ -420,5 +509,78 @@ public class GamePlayManager : Singleton<GamePlayManager>
         AnimationControl.Ins.Ani = Ani;
         Animation.Ins.RunUpBlocks(Ani.BlockStart, Ani.BlockEnd);
         AnimationControl.Ins.DeLayCheckScore = null;
+    }
+    public void RunBoostersBreackBlock(BlockControl TargetBlock) {
+        List<Transform> children = new List<Transform>();
+        foreach (Transform child in TargetBlock.transform)
+        {
+            children.Add(child);
+        }
+
+        foreach (Transform child in children)
+        {
+            LeanPool.Despawn(child);
+        }
+        ParticleSystem effect = Instantiate(EffectDestroyBlock);
+        effect.transform.SetParent(TargetBlock.transform, false);
+        effect.transform.localPosition = new Vector3(0, 0.003f, 0);
+        effect.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f);
+        var main = effect.main;
+        Color blockColor = TargetBlock.ListChildBlock[TargetBlock.ListChildBlock.Count - 1].MeshRenderer.material.color;
+        main.startColor = blockColor;
+        UpdateSocre(TargetBlock.ListChildBlock.Count);
+        TargetBlock.ListChildBlock.Clear();
+    }
+    public void EndBoosters()
+    {
+
+        EvenTransPosBoosters(false);
+    }
+    public void SetUpBooster()
+    {
+        EvenTransPosBoosters(true);
+    }
+    public void EvenTransPosBoosters(bool Start)
+    {
+        Transform CameraTransform = GameManager.Ins.CurrenLevel.transform;
+        GameplayUI gameplayUI = UIManager.Ins.GetUI<GameplayUI>();
+        Transform TranformGamePlay = GameManager.Ins.CurrenGamePlay.transform;
+        if (Start)
+        {
+            GameManager.Ins.CurrenGridLevel.rotate.enabled = false;
+            SetPause(true);
+            GameManager.Ins.CurrenLevel.transform.DORotate(new Vector3(-16, 0, 16), 1f);
+            GameManager.Ins.PanelGamePlay.transform.DORotate(new Vector3(-16, 0, 16), 1f);
+            foreach (RectTransform t in gameplayUI.TranformButtonBoosters)
+            {
+                t.DOAnchorPos3DY(-100, 0.5f);
+            }
+            TranformGamePlay.DOLocalMoveY(-10, 0.5f).OnComplete(() =>
+            {
+                gameplayUI.PanelIntroduceBoosters.DOAnchorPos3DX(0, 0.5f).OnComplete(() =>
+                {
+                    RunBoosters = true;
+                });
+            });
+
+        }
+        else
+        {
+            GameManager.Ins.CurrenLevel.transform.DORotate(new Vector3(0, 0, 0), 1f);
+            GameManager.Ins.PanelGamePlay.transform.DORotate(new Vector3(0, 0, 0), 1f);
+            gameplayUI.PanelIntroduceBoosters.DOAnchorPos3DX(-1500, 0.5f).OnComplete(() =>
+            {
+            foreach (RectTransform t in gameplayUI.TranformButtonBoosters)
+              {
+                  t.DOAnchorPos3DY(160, 0.5f);
+              }
+                TranformGamePlay.DOLocalMoveY(0, 0.5f).OnComplete(() =>
+                {
+                    RunBoosters = false;
+                    SetPause(false);
+                    GameManager.Ins.CurrenGridLevel.rotate.enabled = true;
+                }); ;
+            });
+        }
     }
 }

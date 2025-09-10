@@ -11,6 +11,7 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SocialPlatforms;
+using UnityEngine.UIElements;
 
 public class InitGrid : MonoBehaviour 
 {
@@ -23,10 +24,12 @@ public class InitGrid : MonoBehaviour
     [SerializeField] GameObject ObjectPrefabLockCount;
     [SerializeField] GameObject ObjectPrefabUpport;
     public List<BlockControl> ListblockGround = new List<BlockControl>();
+    public DragRotate rotate;
     private List<Vector3> CenterGird = new List<Vector3>();
     int NumberInit = 10;
     private void Start()
     {
+        rotate = GetComponent<DragRotate>();
         foreach (Transform i in transform)
         {
             BlockControl bc = i.GetComponent<BlockControl>();
@@ -397,8 +400,8 @@ public class InitGrid : MonoBehaviour
             bcComponent.gameObject.layer = LayerMask.NameToLayer("Lock");
             GameObject ObjectLock = Instantiate(ObjectPrefabUpport, Vector3.zero, Quaternion.identity);
             ObjectLock.transform.SetParent(bcComponent.transform, true);
-            ObjectLock.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
-            ObjectLock.transform.localPosition = Vector3.zero + new Vector3(0.0075f, 0.003f,-0.0075f);
+            ObjectLock.transform.localScale = new Vector3(0.008f, 0.008f, 0.008f);
+            ObjectLock.transform.localPosition = Vector3.zero + new Vector3(0,0.011f,0);
             bcComponent.GameObjectMod = ObjectLock;
         }
     }
