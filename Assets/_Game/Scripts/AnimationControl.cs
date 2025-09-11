@@ -32,11 +32,11 @@ public class AnimationControl : Singleton<AnimationControl>
 
     private void Update()
     {
-
+/*
         if(IsRun && Ani.BlockStart == null)
         {
             IsRun = false;
-        }
+        }*/
 
         if (Data.gamePlayManager.DelayCheck.Count==0 && Ani.BlockStart == null && !IsRun && !ScorePlus && Data.gameManager.CheckEndGame())
         {
@@ -47,7 +47,7 @@ public class AnimationControl : Singleton<AnimationControl>
             delaysort = true;
         }
         else delaysort = false; 
-        if (Ani.BlockStart!=null && !IsRun && !ScorePlus && !delaysort )
+        if ( !IsRun && !ScorePlus && !delaysort && Ani.BlockStart != null )
         {
             HandleData();
             IsRun = true;
@@ -58,7 +58,7 @@ public class AnimationControl : Singleton<AnimationControl>
             }
             
         }
-        else if (Ani.BlockStart == null && !IsRun && !ScorePlus && DeLayCheckScore == null)
+        else if (!IsRun && !ScorePlus && DeLayCheckScore == null && Ani.BlockStart == null)
         {
             DeLayCheckScore= StartCoroutine(DelayCheckSocre());
             

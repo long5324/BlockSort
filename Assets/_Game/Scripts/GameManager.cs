@@ -151,32 +151,42 @@ public class GameManager : Singleton<GameManager>
         }
         UpdateScore();
     }
-    public void Rerool()
+    public void Reroll()
     {
+        // Lấy ObjectGamePlay
         GameObject ObjectGamePlay = LevelGame.transform.GetChild(1).gameObject;
-
-        foreach (Transform i in ObjectGamePlay.transform)
+        GamePlayManager.Ins.SetPause(true);
+        // 1️⃣ Dịch xuống y = -5
+        ObjectGamePlay.transform.DOMoveY(-5f, 0.3f).OnComplete(() =>
         {
-            ObjectSet OBS = i.GetComponent<ObjectSet>();
-            OBS.ListChildBlock.Clear();
-
-            // ✅ Tạo list tạm để lưu con của i
-            List<GameObject> children = new List<GameObject>();
-            foreach (Transform j in i)
+            // 2️⃣ Xử lý xóa child và clear data
+            foreach (Transform i in ObjectGamePlay.transform)
             {
-                children.Add(j.gameObject);
+                ObjectSet OBS = i.GetComponent<ObjectSet>();
+                if (OBS != null)
+                    OBS.ListChildBlock.Clear();
+
+                List<GameObject> children = new List<GameObject>();
+                foreach (Transform j in i)
+                {
+                    children.Add(j.gameObject);
+                }
+                foreach (var child in children)
+                {
+                    LeanPool.Despawn(child);
+                }
             }
 
-            // ✅ Despawn tất cả
-            foreach (var child in children)
-            {
-                LeanPool.Despawn(child);
-            }
-        }
+            // 3️⃣ Spawn block mới
+            GamePlayManager.Ins.RandomSpawnBlockChild();
 
-        GamePlayManager.Ins.RandomSpawnBlockChild();
+            // 4️⃣ Dịch ObjectGamePlay về y = 0
+            ObjectGamePlay.transform.DOMoveY(0f, 0.3f).SetEase(Ease.OutBack).OnComplete(() => {
+                GamePlayManager.Ins.SetPause(false);
+            });
+        });
     }
-    public ChildBlock SpawnBlockChild(BlockColor Color)
+     public ChildBlock SpawnBlockChild(BlockColor Color)
     {
         ChildBlock ObjectR = null;
         foreach (BlockData i in BlockData.BlockDataBase)
@@ -200,7 +210,7 @@ public class GameManager : Singleton<GameManager>
         {
             if (b.Color == Color)
             {
-                ObjectR = Instantiate(BlockData.BlockPrefab);
+                ObjectR =  Instantiate(BlockData.BlockPrefab);
                 ObjectR.Configure(b);
                 break;
             }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Xml.Serialization;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,6 +11,7 @@ public class SettingUi : UICanvas
     [SerializeField] Button RePlayButton;
     [SerializeField] Button NextLevelButton;
     [SerializeField] Button HomeButton;
+    [SerializeField] TextMeshProUGUI TextScore;
     GameplayUI GamePlayUI;
     private void Start()
     {
@@ -48,10 +50,13 @@ public class SettingUi : UICanvas
     public override void Open()
     {
         base.Open();
+        TextScore.text = GamePlayManager.Ins.CurrenScore.ToString() + "/" + GameManager.Ins.MaxCurrenScore.ToString();
+        GamePlayManager.Ins.SetPause(true);
     }
     public override void Close(float delayTime)
     {
         base.Close(delayTime);
+        GamePlayManager.Ins.SetPause(false);
     }
     public void OpenSetting(bool b)
     {

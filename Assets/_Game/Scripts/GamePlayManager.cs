@@ -5,7 +5,6 @@ using Lean.Pool;
 using System.Collections.Generic;
 using System.ComponentModel;
 using Unity.VisualScripting;
-using UnityEditor.Search;
 using UnityEngine;
 using UnityEngine.Rendering.UI;
 using UnityEngine.UIElements;
@@ -66,7 +65,6 @@ public class GamePlayManager : Singleton<GamePlayManager>
             if (i.State == StateBlock.Lock)
             {
                 ListBlockLock.Add(i);
-               
             }
         }
     }
@@ -232,6 +230,8 @@ public class GamePlayManager : Singleton<GamePlayManager>
             if (TargetBlock == null )
             {
                 TargetBlock = hit.collider.gameObject.GetComponent<BlockControl>();
+                if(TargetBlock != null)
+                TargetBlock.SetColor(LightMaterial);
             }
             else
             {
@@ -246,6 +246,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
                     if (Check != null)
                     {
                         TargetBlock = Check;
+                        TargetBlock.SetColor(LightMaterial);
                     }
                     if (TargetBlock.State == StateBlock.Lock)
                         return;
@@ -316,7 +317,6 @@ public class GamePlayManager : Singleton<GamePlayManager>
                 c = true;break;
             }
         }
-        Debug.Log(ListBlockGamePlay.Count);
         if (!c)
         {
             RandomSpawnBlockChild();    
@@ -396,7 +396,6 @@ public class GamePlayManager : Singleton<GamePlayManager>
         if (Data.animationControl.ScorePlus || Data.animationControl.IsRun)
         {
             DelayCheck.Add(TargetBlock.PosionBlock);
-           
         }
         else { 
             CheckFirt(TargetBlock.PosionBlock);
@@ -415,8 +414,12 @@ public class GamePlayManager : Singleton<GamePlayManager>
             Data.gameManager.Winlevel();
         }
     }
+    int countspawn = 0;
+    int countetup = 0;
     public void RandomSpawnBlockChild()
     {
+        countspawn = 0;
+        countetup = 0;
         foreach (var i in ListBlockGamePlay)
         {
             int countColor = Random.Range(1, 4); 
@@ -435,22 +438,19 @@ public class GamePlayManager : Singleton<GamePlayManager>
 
                 BlockColor color = Data.gameManager.BlockData.BlockDataBase[ColorBlock[j]].Color;
                 List<Transform> ObjectGame = new List<Transform>();
-                for (int k = 0; k < countBlock; k++)
-                {
-                   ObjectGame.Add(GameManager.Ins.SpawnBlockChild(color).transform);
-
-                }
                 for (int k = 0; k < currentBlock; k++)
                 {
-                    if (k < ObjectGame.Count)
-                    {
-                        ObjectGame[k].gameObject.SetActive(true); 
-                        ObjectGame[k].transform.SetParent(i.transform);
-                        ObjectGame[k].transform.localRotation = Quaternion.identity;
-                        ObjectGame[k].transform.localPosition = new Vector3(0, sizeYBlock * i.transform.childCount, 0);  
-                        ObjectGame[k].transform.localScale = baseScale; 
-                    }
+                    countspawn++;
+                    Transform obj = GameManager.Ins.SpawnBlockChild(color).transform;
+
+                    countetup++;
+                    obj.gameObject.SetActive(true);
+                    obj.SetParent(i.transform);
+                    obj.localRotation = Quaternion.identity;
+                    obj.localPosition = new Vector3(0, sizeYBlock * i.transform.childCount, 0);
+                    obj.localScale = baseScale;
                 }
+
             }
             ObjectSet OJS = i.GetComponent<ObjectSet>();
 
@@ -465,6 +465,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
             Col.size = new Vector3(Col.size.x , SizeY , Col.size.z );
             Col.center = new Vector3(Col.center.x, SizeY/3, Col.center.z);
         }
+        Debug.Log(countspawn);
     }
 
     public int CheckScore(BlockControl Count)
@@ -484,7 +485,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     }
     public void EventSupport(BlockControl BlockStart, BlockControl BlockEnd )
     {
-        AnimationControl.Ins.IsRun = true;
+      
         BlockData Data = new BlockData();
         Data.Color = BlockEnd.ListChildBlock[BlockEnd.ListChildBlock.Count - 1].CurrenColor;
         Data.BlockMaterial = BlockEnd.ListChildBlock[BlockEnd.ListChildBlock.Count - 1].MeshRenderer.material;
@@ -526,7 +527,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         effect.transform.localPosition = new Vector3(0, 0.003f, 0);
         effect.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f);
         var main = effect.main;
-        Color blockColor = TargetBlock.ListChildBlock[TargetBlock.ListChildBlock.Count - 1].MeshRenderer.material.color;
+        Color blockColor = TargetBlock.ListChildBlock[TargetBlock.ListChildBlock.Count - 1].MeshRenderer.sharedMaterial.color;
         main.startColor = blockColor;
         UpdateSocre(TargetBlock.ListChildBlock.Count);
         TargetBlock.ListChildBlock.Clear();

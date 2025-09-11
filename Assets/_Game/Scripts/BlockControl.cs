@@ -49,7 +49,7 @@ public class BlockControl : MonoBehaviour
     }
     public void SetColor(Material material)
     {
-        Renderer.material = material;
+        Renderer.sharedMaterial = material;
     }
     private bool IsLocked()
     {
@@ -59,10 +59,10 @@ public class BlockControl : MonoBehaviour
     {
         if (Renderer == null)
         {
-            GetComponent<Renderer>().material = GamePlayManager.Ins.MaterialDF;
+            GetComponent<Renderer>().sharedMaterial = GamePlayManager.Ins.MaterialDF;
             return;
         }
-        Renderer.material = GamePlayManager.Ins.MaterialDF;
+        Renderer.sharedMaterial = GamePlayManager.Ins.MaterialDF;
     }
     public BlockColor CheckColor()
     {
@@ -152,6 +152,7 @@ public class BlockControl : MonoBehaviour
         }
         if (State == StateBlock.LockCount) DataSpawn = DataTg;
     }
+    
     public void SpawnBlockChildWithBool()
     {
         for (int i = transform.childCount - 1; i >= 0; i--)
@@ -185,6 +186,7 @@ public class BlockControl : MonoBehaviour
 
             }
         }
+   
     }
     public void BackNomal()
     {

@@ -1,4 +1,4 @@
-using DG.Tweening.Core.Easing;
+﻿using DG.Tweening.Core.Easing;
 using UnityEngine;
 
 [System.Serializable]
@@ -9,21 +9,26 @@ public class ChildBlock : MonoBehaviour
     public void SetDefaultBlockChild()
     {
         CurrenColor = BlockColor.None;
-        MeshRenderer.material = null;
-    }
-    public void Configure(BlockData Data)
-    {
-        CurrenColor = Data.Color;
-        MeshRenderer.material = Data.BlockMaterial;
-    }
-    private void OnEnable()
-    {
-        ResetState();
+        MeshRenderer.sharedMaterial = null; // ✅ không clone nữa
     }
 
     private void ResetState()
     {
         CurrenColor = BlockColor.None;
-        MeshRenderer.material = null; 
+        MeshRenderer.sharedMaterial = null; // ✅
     }
+
+    public void Configure(BlockData Data)
+    {
+        CurrenColor = Data.Color;
+        MeshRenderer.sharedMaterial = Data.BlockMaterial;
+     
+    }
+
+    private void OnEnable()
+    {
+        ResetState();
+    }
+
+
 }

@@ -36,6 +36,7 @@ public class GameplayUI : UICanvas
         BarTransform.DOAnchorPos3DY(-200, 0.7f);
         PobUpStart.DOAnchorPos3DX(1500, 0.7f);
         GamePlayManager.Ins.SetPause(false);
+        SettingButton.enabled = true;
     }
    public void SetupLevel(string nameLevel , string Score)
     {
@@ -73,6 +74,7 @@ public class GameplayUI : UICanvas
     {
         BarTransform.anchoredPosition = new Vector2(0, 150);
         PobUpStart.anchoredPosition = new Vector2(-1500, 0);
+        SettingButton.enabled = false;
         GamePlayManager.Ins.SetPause(true);
         StartCoroutine(WaitStartIntro());
     }
@@ -109,7 +111,7 @@ public class GameplayUI : UICanvas
     }
     public void ReRollButtonEvent()
     {
-        GameManager.Ins.Rerool();
+        GameManager.Ins.Reroll();
     }
     public override void Close(float delayTime)
     {

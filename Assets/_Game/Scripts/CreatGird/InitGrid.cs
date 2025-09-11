@@ -112,13 +112,16 @@ public class InitGrid : MonoBehaviour
                 bc.State = StateBlock.Nomal;
                 bc.BacktoDFColor();
             }
+            child.gameObject.layer = 3;
             for (int j = child.childCount - 1; j >= 0; j--)
             {
                 Transform grandChild = child.GetChild(j);
                 if (Application.isPlaying)
                     Destroy(grandChild.gameObject);
-                else
+                else 
                     DestroyImmediate(grandChild.gameObject);
+
+               
             }
         }
     }
@@ -370,7 +373,7 @@ public class InitGrid : MonoBehaviour
         }
         if (bcComponent.State == StateBlock.Lock)
         {
-            bcComponent.GetComponent<Renderer>().material = MaterialLock;
+            bcComponent.GetComponent<Renderer>().sharedMaterial = MaterialLock;
             bcComponent.gameObject.layer = LayerMask.NameToLayer("Lock");
             GameObject ObjectLock = Instantiate(ObjectPrefabLock, Vector3.zero, Quaternion.identity);
             ObjectLock.transform.SetParent(bcComponent.transform, true);
@@ -386,7 +389,7 @@ public class InitGrid : MonoBehaviour
         }
         else if (bcComponent.State == StateBlock.LockCount)
         {
-            bcComponent.GetComponent<Renderer>().material = MaterialLock;
+            bcComponent.GetComponent<Renderer>().sharedMaterial = MaterialLock;
             bcComponent.gameObject.layer = LayerMask.NameToLayer("Lock");
             GameObject ObjectLock = Instantiate(ObjectPrefabLockCount, Vector3.zero, Quaternion.identity);
             ObjectLock.transform.SetParent(bcComponent.transform, true);
@@ -396,7 +399,7 @@ public class InitGrid : MonoBehaviour
         }
         else if (bcComponent.State == StateBlock.Support)
         {
-            bcComponent.GetComponent<Renderer>().material = MaterialLock;
+            bcComponent.GetComponent<Renderer>().sharedMaterial = MaterialLock;
             bcComponent.gameObject.layer = LayerMask.NameToLayer("Lock");
             GameObject ObjectLock = Instantiate(ObjectPrefabUpport, Vector3.zero, Quaternion.identity);
             ObjectLock.transform.SetParent(bcComponent.transform, true);

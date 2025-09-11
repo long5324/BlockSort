@@ -12,8 +12,6 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static Unity.VisualScripting.Metadata;
-
 public class Animation : Singleton<Animation>
 {
     public EffectData particleObject;
@@ -37,7 +35,7 @@ public class Animation : Singleton<Animation>
             tf.Add(child.transform);
         }
 
-        // Chạy coroutine UpBlock (không cần chờ)
+        //Chạy coroutine UpBlock (không cần chờ)
         StartCoroutine(UpBlock(
             tf,
             end.transform.childCount * Data.gamePlayManager.sizeYBlock + 0.006f,
@@ -145,7 +143,7 @@ public class Animation : Singleton<Animation>
             .SetEase(Ease.InOutSine);  
     }
     Vector3 SalceCahe;
-    List<BlockControl> CheckList = new List<BlockControl>();
+    BlockControl BCT = null;
     public IEnumerator PlusScore(BlockControl block, int score, float delay, bool c)
     {
         ParticleSystem Particle = particleObject.StartEffect(block.CheckColor(), block.PosionBlock);
@@ -185,11 +183,27 @@ public class Animation : Singleton<Animation>
             Destroy(Particle);
             Data.animationControl.ChangeInDataBlockControl(block.PosionBlock);
             AddCheck(block.PosionBlock);
-            CheckList.Add(block);
-            if (c)
+        if (BCT == null)
+        {
+            foreach (var i in BlockArow)
             {
-                Data.animationControl.ScorePlus = false;
+                if (i.State == StateBlock.Support)
+                {
+                    BCT = i; break;
+                }
             }
+        }
+        if (c)
+        {
+            Data.animationControl.ScorePlus = false;
+            if (BCT!= null && BCT.State == StateBlock.Support)
+            {
+                Data.animationControl.IsRun = true;
+                Data.animationControl.Ani = null;
+                Stretch(BCT);
+
+            }
+        }
             foreach (var i in BlockArow)
             {
                 if (i.State == StateBlock.LockCount)
@@ -205,11 +219,7 @@ public class Animation : Singleton<Animation>
                         Destroy(i.transform.GetChild(0));
                     }
                 }
-                else if (i.State == StateBlock.Support)
-                {
-                    Stretch(i);
-
-                }
+           
             
         }
     }
@@ -241,6 +251,7 @@ public class Animation : Singleton<Animation>
                 // Chạy event sau khi bật ra
                 BlockControl Bc = ChooseRandomBlock();
                 GamePlayManager.Ins.EventSupport(targetTransform, Bc);
+                BCT = null;
             });
     }
 

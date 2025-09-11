@@ -31,17 +31,4 @@ public class Block : ScriptableObject
     public List<BlockData> BlockDataBase = new List<BlockData>();
     public ChildBlock BlockPrefab;
   
-/*    public Material GetMaterial(BlockColor Color)
-    {
-        foreach (var i in DataBases)
-        {
-            if (i.CurrenColor == Color)
-            {
-                return i.gameObject.GetComponent<Renderer>().sharedMaterial;
-            }
-        }
-        return null;
-    }
-
-*/
 }
