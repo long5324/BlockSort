@@ -132,16 +132,25 @@ public class HomeUI : UICanvas
     {
         float duration = 0.3f;
 
+        // ❌ Khóa nút bấm trong lúc tween
+        RightButton.interactable = false;
+        LeftButton.interactable = false;
+
         if (next)
         {
-            // Tween positions & scales
             imageFarLeft.transform.DOLocalMove(farLeftPos, duration).SetEase(Ease.InOutSine);
-            imageLeft.transform.DOLocalMove(farLeftPos, duration).SetEase(Ease.InOutSine).OnComplete(() => SwapImages(true));
+            imageLeft.transform.DOLocalMove(farLeftPos, duration).SetEase(Ease.InOutSine)
+                .OnComplete(() => {
+                    SwapImages(true);
+                    // ✅ Mở lại sau khi xong
+                    RightButton.interactable = true;
+                    LeftButton.interactable = true;
+                });
+
             imageCenter.transform.DOLocalMove(leftPos, duration).SetEase(Ease.InOutSine);
             imageRight.transform.DOLocalMove(centerPos, duration).SetEase(Ease.InOutSine);
             imageFarRight.transform.DOLocalMove(rightPos, duration).SetEase(Ease.InOutSine);
 
-            // Scale & alpha
             imageCenter.transform.DOScale(sideScale, duration);
             imageRight.transform.DOScale(centerScale, duration);
             imageLeft.transform.DOScale(farScale, duration);
@@ -151,18 +160,22 @@ public class HomeUI : UICanvas
             imageFarRight.DOFade(0.6f, duration);
             imageRight.DOFade(1f, duration);
             imageCenter.DOFade(0.6f, duration);
-
         }
         else
         {
-            // Tween positions & scales
             imageFarRight.transform.DOLocalMove(farRightPos, duration).SetEase(Ease.InOutSine);
-            imageRight.transform.DOLocalMove(farRightPos, duration).SetEase(Ease.InOutSine).OnComplete(() => SwapImages(false));
+            imageRight.transform.DOLocalMove(farRightPos, duration).SetEase(Ease.InOutSine)
+                .OnComplete(() => {
+                    SwapImages(false);
+                    // ✅ Mở lại sau khi xong
+                    RightButton.interactable = true;
+                    LeftButton.interactable = true;
+                });
+
             imageCenter.transform.DOLocalMove(rightPos, duration).SetEase(Ease.InOutSine);
             imageLeft.transform.DOLocalMove(centerPos, duration).SetEase(Ease.InOutSine);
             imageFarLeft.transform.DOLocalMove(leftPos, duration).SetEase(Ease.InOutSine);
 
-            // Scale & alpha
             imageCenter.transform.DOScale(sideScale, duration);
             imageLeft.transform.DOScale(centerScale, duration);
             imageRight.transform.DOScale(farScale, duration);

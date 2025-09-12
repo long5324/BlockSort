@@ -143,11 +143,13 @@ public class BlockControl : MonoBehaviour
             {
                 GamePlayManager gamePlaymanager = GamePlayManager.Ins;
                 ChildBlock Obj = GameManager.Ins.SpawnBlockNotBool(i.Color);
-                Obj.transform.SetParent(transform);
-                Obj.transform.localScale = gamePlaymanager.baseScale;
-                Obj.transform.localPosition = new Vector3(0, gamePlaymanager.sizeYBlock * transform.childCount, 0);
-                ListChildBlock.Add(Obj);
-
+                if (Obj != null)
+                {
+                    Obj.transform.SetParent(transform);
+                    Obj.transform.localScale = gamePlaymanager.baseScale;
+                    Obj.transform.localPosition = new Vector3(0, gamePlaymanager.sizeYBlock * transform.childCount, 0);
+                    ListChildBlock.Add(Obj);
+                }
             }
         }
         if (State == StateBlock.LockCount) DataSpawn = DataTg;

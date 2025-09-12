@@ -24,27 +24,12 @@ public class GameplayUI : UICanvas
     public RectTransform PobUpStart;
     public TextMeshProUGUI TextLevel;
     public TextMeshProUGUI TextScoreIntro;
-    public IEnumerator WaitStartIntro()
-    {
-        yield return new WaitForSeconds(0.5f);
-        PobUpStart.DOAnchorPos3DX(0, 0.7f);
-        StartCoroutine(WaitEndIntro());
-    }
-    public IEnumerator WaitEndIntro()
-    {
-        yield return new WaitForSeconds(2f);
-        BarTransform.DOAnchorPos3DY(-200, 0.7f);
-        PobUpStart.DOAnchorPos3DX(1500, 0.7f);
-        GamePlayManager.Ins.SetPause(false);
-        SettingButton.enabled = true;
-    }
-   public void SetupLevel(string nameLevel , string Score)
-    {
-        TextLevel.text = nameLevel;
-        TextScoreIntro.text = Score;
-    }
+
     private void Awake()
     {
+        SettingButton.enabled = false;
+        ReRollButton.enabled = false;
+        DestroyBlock.enabled = false;
         SettingButton.onClick.AddListener(SettingEvent);
         ReRollButton.onClick.AddListener(ReRollButtonEvent);
         DestroyBlock.onClick.AddListener(EventDestroyBlock);
@@ -72,11 +57,33 @@ public class GameplayUI : UICanvas
     }
     public void StartIntro()
     {
-        BarTransform.anchoredPosition = new Vector2(0, 150);
+        BarTransform.anchoredPosition = new Vector2(0, 300);
         PobUpStart.anchoredPosition = new Vector2(-1500, 0);
         SettingButton.enabled = false;
         GamePlayManager.Ins.SetPause(true);
         StartCoroutine(WaitStartIntro());
+    }
+    public IEnumerator WaitStartIntro()
+    {
+        yield return new WaitForSeconds(0.5f);
+        PobUpStart.DOAnchorPos3DX(0, 0.7f);
+        StartCoroutine(WaitEndIntro());
+    }
+    public IEnumerator WaitEndIntro()
+    {
+        yield return new WaitForSeconds(2f);
+        BarTransform.DOAnchorPos3DY(-200, 0.7f);
+        PobUpStart.DOAnchorPos3DX(1500, 0.7f);
+        GamePlayManager.Ins.SetPause(false);
+        SettingButton.enabled = true;
+        SettingButton.enabled = true;
+        ReRollButton.enabled = true;
+        DestroyBlock.enabled = true;
+    }
+    public void SetupLevel(string nameLevel, string Score)
+    {
+        TextLevel.text = nameLevel;
+        TextScoreIntro.text = Score;
     }
     public override void Open()
     { 
@@ -104,7 +111,7 @@ public class GameplayUI : UICanvas
     public void EventChangeBlock()
     {
         string tile = "Change position";
-        string main = "Select the block you want to move";
+        string main = "Hold to move a block you want.";
         ChangeTextPanel(tile, main);
         GamePlayManager.Ins.SetUpBooster();
         GamePlayManager.Ins.StateBooter = Boosters.ChangeBlock;

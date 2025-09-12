@@ -28,12 +28,12 @@ public class GamePlayManager : Singleton<GamePlayManager>
     public LayerMask BlockLM; 
     [Header("Other")]   
     public ParticleSystem EffectDestroyBlock;
+    public ParticleSystem EffectBlockEat;
     public Block DataBlockChild;
     private Camera cam;
     private ObjectSet selectedBlock = null;
     public BlockControl TargetBlock { get; set; }
     public int CountScaleScore { get; set; } = 0;
-    public bool StartScaleScore { get; set; } = false;
     public int CurrenScore { get; set; } = 0;
     public int ScorePluss { get; set; } = 0;
     public List<BlockControl> BottomBlock { get; set; }
@@ -171,22 +171,29 @@ public class GamePlayManager : Singleton<GamePlayManager>
     {
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
-        if (Physics.Raycast(ray, out hit, 100f, LayerMask.GetMask("GridBlock")))
+        int mask = (1 << 3) | (1 << 8);
+        if (Physics.Raycast(ray, out hit, 100f, mask))
         {
-           
             BlockControl TargetBlock  =  hit.collider.gameObject.GetComponent<BlockControl>();
             if (TargetBlock == null) return;
-            if (TargetBlock.State != StateBlock.Nomal) return;
-            if(TargetBlock.transform.childCount == 0) return;
-            if (StateBooter == Boosters.DestroyBlock)
+            Debug.Log(TargetBlock.State);
+            if(TargetBlock.State == StateBlock.LockCount)
             {
+                Animation.Ins.HandleBlockBlockTarget(TargetBlock);
+                EndBoosters();
+                RunBoosters = false;
+            }
+            if (TargetBlock.State != StateBlock.Nomal) return;
+            if (TargetBlock.transform.childCount == 0) return;
+            if (StateBooter == Boosters.DestroyBlock)
+            { 
                 RunBoostersBreackBlock(TargetBlock);
                 EndBoosters();
                 RunBoosters = false;
             }
             else if(StateBooter == Boosters.ChangeBlock)
             {
-        
+              
                 if (selectedBlock == null)
                 {
                     ObjectP = new GameObject("GroupBlock");
@@ -206,6 +213,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
             }
                 
         }
+
     }
     public void ClearChildren(Transform parent)
     {
@@ -554,7 +562,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
             GameManager.Ins.PanelGamePlay.transform.DORotate(new Vector3(-16, 0, 16), 1f);
             foreach (RectTransform t in gameplayUI.TranformButtonBoosters)
             {
-                t.DOAnchorPos3DY(-100, 0.5f);
+                t.DOAnchorPos3DY(-300, 0.5f);
             }
             TranformGamePlay.DOLocalMoveY(-10, 0.5f).OnComplete(() =>
             {

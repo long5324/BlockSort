@@ -14,7 +14,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 public class Animation : Singleton<Animation>
 {
-    public EffectData particleObject;
+  
     [SerializeField] public float TimeUpBlock { get; private set; } = 0.05f;
     [SerializeField] public float TimeMoveBlock { get; private set; } = 0.05f;
     [SerializeField] public float TimeDownBlock { get; private set; } = 0.05f;
@@ -146,81 +146,137 @@ public class Animation : Singleton<Animation>
     BlockControl BCT = null;
     public IEnumerator PlusScore(BlockControl block, int score, float delay, bool c)
     {
-        ParticleSystem Particle = particleObject.StartEffect(block.CheckColor(), block.PosionBlock);
-        Data.gamePlayManager.StartScaleScore = false;
         yield return new WaitForSeconds(delay);
-        List<Transform> children = new List<Transform>();
 
+        // 1. Lấy danh sách child sẽ xoá
+        var children = GetChildrenToRemove(block, score);
+
+        // 2. Lấy block Support
+        BlockControl bc = GetSupportBlock(block);
+
+        // 3. Spawn effect
+        ParticleSystem effect = SpawnEatEffect(block, score);
+
+        // 4. Nếu có block Support thì squash
+        if (bc != null) Squash(bc, 0.06f * children.Count);
+
+        // 5. Xử lý xoá từng child + animation
+        yield return RemoveChildren(block, children, effect);
+
+        // 6. Xoá effect
+        DestroyEffect(effect);
+
+        // 7. Update score + data
+        FinalizeScore(block, children);
+
+        // 8. Xử lý tiếp (cờ c = true)
+        HandleContinue(block, bc, c);
+
+        // 9. Xử lý các block LockCount
+        HandleLockBlocks(block);
+    }
+    private List<Transform> GetChildrenToRemove(BlockControl block, int score)
+    {
+        List<Transform> children = new List<Transform>();
         int takeCount = Mathf.Min(score, block.transform.childCount);
-        List<BlockControl> BlockArow = block.BlockLink;
+
         for (int i = block.transform.childCount - 1; i >= block.transform.childCount - takeCount; i--)
         {
-            Transform child = block.transform.GetChild(i);
-            
-            children.Add(child);
+            children.Add(block.transform.GetChild(i));
         }
-        BlockControl bc = null;
-        foreach (var j in BlockArow)
+        return children;
+    }
+
+    private BlockControl GetSupportBlock(BlockControl block)
+    {
+        foreach (var j in block.BlockLink)
         {
             if (j.State == StateBlock.Support)
             {
                 SalceCahe = j.transform.localScale;
-                bc = j; break;
+                return j;
             }
         }
-        if (bc != null) Squash(bc, 0.06f * children.Count);
-            for (int i = 0; i < children.Count; i++)
-            {
-                if (children[i] != null)
-                {
-                    Particle.transform.position = children[i].position;
-                    yield return children[i].DOScale(Vector3.zero, 0.06f).WaitForCompletion();
-                    LeanPool.Despawn(children[i]);
-                    block.ListChildBlock[block.ListChildBlock.Count - 1 - i].SetDefaultBlockChild();
-                }
-            }
-            GamePlayManager.Ins.UpdateSocre(children.Count);
-            Destroy(Particle);
-            Data.animationControl.ChangeInDataBlockControl(block.PosionBlock);
-            AddCheck(block.PosionBlock);
-        if (BCT == null)
+        return null;
+    }
+
+    private ParticleSystem SpawnEatEffect(BlockControl block, int score)
+    {
+        ParticleSystem effect = Instantiate(GamePlayManager.Ins.EffectBlockEat, block.transform);
+        effect.transform.localPosition = new Vector3(0, score * GamePlayManager.Ins.sizeYBlock, 0);
+        effect.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f);
+
+        var main = effect.main;
+        main.startColor = block.ListChildBlock[^1].MeshRenderer.material.color;
+        return effect;
+    }
+
+    private IEnumerator RemoveChildren(BlockControl block, List<Transform> children, ParticleSystem effect)
+    {
+        for (int i = 0; i < children.Count; i++)
         {
-            foreach (var i in BlockArow)
+            if (children[i] != null)
             {
-                if (i.State == StateBlock.Support)
-                {
-                    BCT = i; break;
-                }
+                effect.transform.localPosition = children[i].localPosition;
+                yield return children[i].DOScale(Vector3.zero, 0.06f).WaitForCompletion();
+
+                LeanPool.Despawn(children[i]);
+                block.ListChildBlock[block.ListChildBlock.Count - 1 - i].SetDefaultBlockChild();
             }
         }
+    }
+
+    private void DestroyEffect(ParticleSystem effect)
+    {
+        if (effect != null)
+        {
+            effect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            Destroy(effect.gameObject);
+        }
+    }
+
+    private void FinalizeScore(BlockControl block, List<Transform> children)
+    {
+        GamePlayManager.Ins.UpdateSocre(children.Count);
+        Data.animationControl.ChangeInDataBlockControl(block.PosionBlock);
+        AddCheck(block.PosionBlock);
+    }
+
+    private void HandleContinue(BlockControl block, BlockControl bc, bool c)
+    {
         if (c)
         {
             Data.animationControl.ScorePlus = false;
-            if (BCT!= null && BCT.State == StateBlock.Support)
+            if (bc != null && bc.State == StateBlock.Support)
             {
                 Data.animationControl.IsRun = true;
                 Data.animationControl.Ani = null;
-                Stretch(BCT);
-
+                Stretch(bc);
             }
         }
-            foreach (var i in BlockArow)
+    }
+
+    private void HandleLockBlocks(BlockControl block)
+    {
+        foreach (var i in block.BlockLink)
+        {
+            if (i.State == StateBlock.LockCount)
             {
-                if (i.State == StateBlock.LockCount)
-                {
-                    GameManager.Ins.CurrenGridLevel.SpawnEffect(i);
-                    i.DeleteLockCount();
-                    GamePlayManager.Ins.ShakeObject(i.transform);
-                    if (i.CheckCount() == 1)
-                    {
-                        GamePlayManager.Ins.ShakeObject(i.transform);
-                        i.BackNomal();
-                        i.SetColor(GamePlayManager.Ins.MaterialDF);
-                        Destroy(i.transform.GetChild(0));
-                    }
-                }
-           
-            
+                HandleBlockBlockTarget(i);
+            }
+        }
+    }
+    public void HandleBlockBlockTarget(BlockControl BlockLock)
+    {
+        GameManager.Ins.CurrenGridLevel.SpawnEffect(BlockLock);
+        BlockLock.DeleteLockCount();
+        GamePlayManager.Ins.ShakeObject(BlockLock.transform);
+        if (BlockLock.CheckCount() == 1)
+        {
+            GamePlayManager.Ins.ShakeObject(BlockLock.transform);
+            BlockLock.BackNomal();
+            BlockLock.SetColor(GamePlayManager.Ins.MaterialDF);
+            Destroy(BlockLock.transform.GetChild(0).gameObject);
         }
     }
     // Hàm nén

@@ -74,7 +74,7 @@ public class AnimationControl : Singleton<AnimationControl>
     }
     public IEnumerator DelayCheckSocre()
     {
-        yield return new WaitForSeconds(0.05f);
+        yield return new WaitForSeconds(0.1f);
         HandleScore();
     }
     private void HandleData()

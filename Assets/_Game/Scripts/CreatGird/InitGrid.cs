@@ -81,7 +81,7 @@ public class InitGrid : MonoBehaviour
         foreach(var i in ListblockGround)
         {
          
-          
+           if(i!=null)
             i.SpawnBlockChild();
         }
         SetupBlock();

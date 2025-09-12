@@ -32,12 +32,25 @@ public class GameManager : Singleton<GameManager>
     public GameObject CurrenGamePlay;
     public GameObject PanelGamePlay;
     public InitGrid CurrenGridLevel { get; set; }
+
     private void Start()
     {
         Data = DataInport.Ins;
         MaxCurrenScore = ListGameLever[0].ScoreMax;
         UIManager.Ins.OpenUI<HomeUI>();
     }
+    public static void ScaleByAspectRatio(Transform target, float baseScale = 1f)
+    {
+        float refAspect = 1080f / 1920f; // chuẩn 9:16
+        float currentAspect = (float)Screen.width / Screen.height;
+
+        // tính độ lệch so với tỉ lệ chuẩn
+        float ratio = currentAspect / refAspect;
+
+        // bạn muốn ip12 = 0.9 thì nhân thêm hệ số
+        target.localScale = Vector3.one * (baseScale * ratio);
+    }
+
 
     IEnumerator WaitSpawn()
     {
@@ -49,7 +62,7 @@ public class GameManager : Singleton<GameManager>
     {
         UIManager.Ins.GetUI<GameplayUI>().Open();
         UIManager.Ins.GetUI<GameplayUI>().StartIntro();
-
+       
         AnimationControl.Ins.ResetStateAnimationControl();
         foreach (var i in ListGameLever)
         {
@@ -57,6 +70,7 @@ public class GameManager : Singleton<GameManager>
             {
                 CurrenNumberLevel = Number;
                 CurrenLevel = Instantiate(i.GameObjectLevel, Vector3.zero, Quaternion.identity);
+                ScaleByAspectRatio(CurrenLevel.transform);
                 CurrenGamePlay = Instantiate(GamePlay, Vector3.zero, Quaternion.identity);
                 CurrenLevel.transform.SetParent(LevelGame.transform, false);
                 CurrenGamePlay.transform.SetParent(LevelGame.transform, false);
@@ -117,6 +131,7 @@ public class GameManager : Singleton<GameManager>
         DOTween.KillAll();
         Data.animationControl.IsRun = false;
     }
+
     public void Replay()
     {
         StopAllAnimations();
@@ -131,7 +146,7 @@ public class GameManager : Singleton<GameManager>
             {
                 CurrenLevel = Instantiate(i.GameObjectLevel, Vector3.zero, Quaternion.identity);
                 CurrenGamePlay = Instantiate(GamePlay, Vector3.zero, Quaternion.identity);
-
+                ScaleByAspectRatio(CurrenLevel.transform);
                 CurrenLevel.transform.SetParent(LevelGame.transform, false);
                 CurrenGamePlay.transform.SetParent(LevelGame.transform, false);
                 List<GameObject> ListBlockGamePlay = new List<GameObject>();

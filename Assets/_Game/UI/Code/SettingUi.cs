@@ -1,3 +1,4 @@
+﻿using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using System.Xml.Serialization;
@@ -11,7 +12,9 @@ public class SettingUi : UICanvas
     [SerializeField] Button RePlayButton;
     [SerializeField] Button NextLevelButton;
     [SerializeField] Button HomeButton;
+    [SerializeField] Image  FillScore;
     [SerializeField] TextMeshProUGUI TextScore;
+    [SerializeField] GameObject PanelSetting;
     GameplayUI GamePlayUI;
     private void Start()
     {
@@ -46,6 +49,21 @@ public class SettingUi : UICanvas
         Close(0f);
         UIManager.Ins.GetUI<HomeUI>().Open();
         GamePlayManager.Ins.SetPause(false);
+    }
+    private DOTweenAnimation tweenAnim;
+
+
+    void OnEnable()
+    {
+        tweenAnim = PanelSetting.GetComponent<DOTweenAnimation>();
+        if (tweenAnim != null)
+        {
+            tweenAnim.DORestart();
+        }
+    }
+    public void setFill()
+    {
+        FillScore.fillAmount = GamePlayManager.Ins.CurrenScore / GameManager.Ins.MaxCurrenScore;
     }
     public override void Open()
     {
