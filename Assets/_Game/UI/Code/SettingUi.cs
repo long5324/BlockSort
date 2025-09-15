@@ -33,14 +33,12 @@ public class SettingUi : UICanvas
     {
         GameManager.Ins.Replay();
         Close(0f);
-        GamePlayUI.Open();
         GamePlayManager.Ins.SetPause(false);
     }
     void NextLevel()
     {
         GameManager.Ins.NextLevel();
         Close(0f);
-        GamePlayUI.Open();
         GamePlayManager.Ins.SetPause(false);
     }
     void GoBackHome()
@@ -51,16 +49,6 @@ public class SettingUi : UICanvas
         GamePlayManager.Ins.SetPause(false);
     }
     private DOTweenAnimation tweenAnim;
-
-
-    void OnEnable()
-    {
-        tweenAnim = PanelSetting.GetComponent<DOTweenAnimation>();
-        if (tweenAnim != null)
-        {
-            tweenAnim.DORestart();
-        }
-    }
     public void setFill()
     {
         FillScore.fillAmount = GamePlayManager.Ins.CurrenScore / GameManager.Ins.MaxCurrenScore;
@@ -70,6 +58,11 @@ public class SettingUi : UICanvas
         base.Open();
         TextScore.text = GamePlayManager.Ins.CurrenScore.ToString() + "/" + GameManager.Ins.MaxCurrenScore.ToString();
         GamePlayManager.Ins.SetPause(true);
+        tweenAnim = PanelSetting.GetComponent<DOTweenAnimation>();
+        if (tweenAnim != null)
+        {
+            tweenAnim.DORestart();
+        }
     }
     public override void Close(float delayTime)
     {

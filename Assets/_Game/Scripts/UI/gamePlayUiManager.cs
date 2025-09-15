@@ -6,7 +6,6 @@ using UnityEngine.UI;
 
 public class gamePlayUiManager : Singleton<gamePlayUiManager>
 {
-
     public CanvasGroup MainUI;
     public GameplayUI gamePlayUI;
     public void ChangeScore(string text)

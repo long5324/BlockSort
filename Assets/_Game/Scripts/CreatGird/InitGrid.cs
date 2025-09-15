@@ -85,6 +85,7 @@ public class InitGrid : MonoBehaviour
             i.SpawnBlockChild();
         }
         SetupBlock();
+        
     }
     public void SetupBlock()
     {

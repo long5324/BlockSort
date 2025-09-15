@@ -2,6 +2,7 @@
 using DG.Tweening.Core.Easing;
 using JetBrains.Annotations;
 using Lean.Pool;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -167,13 +168,22 @@ public class Animation : Singleton<Animation>
         DestroyEffect(effect);
 
         // 7. Update score + data
-        FinalizeScore(block, children);
 
+        FinalizeScore(block, children);
         // 8. Xử lý tiếp (cờ c = true)
         HandleContinue(block, bc, c);
 
         // 9. Xử lý các block LockCount
         HandleLockBlocks(block);
+     /*   UIManager.Ins.GetUI<GameplayUI>().CollectAllIcons(
+     UIManager.Ins.GetUI<GameplayUI>().BarTransform,
+     () =>
+     {
+         
+     }
+     );*/
+
+       
     }
     private List<Transform> GetChildrenToRemove(BlockControl block, int score)
     {
@@ -205,7 +215,7 @@ public class Animation : Singleton<Animation>
         ParticleSystem effect = Instantiate(GamePlayManager.Ins.EffectBlockEat, block.transform);
         effect.transform.localPosition = new Vector3(0, score * GamePlayManager.Ins.sizeYBlock, 0);
         effect.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f);
-
+       
         var main = effect.main;
         main.startColor = block.ListChildBlock[^1].MeshRenderer.material.color;
         return effect;
@@ -213,13 +223,15 @@ public class Animation : Singleton<Animation>
 
     private IEnumerator RemoveChildren(BlockControl block, List<Transform> children, ParticleSystem effect)
     {
+        Color color = block.ListChildBlock[block.ListChildBlock.Count - 1].MeshRenderer.material.color;
         for (int i = 0; i < children.Count; i++)
         {
             if (children[i] != null)
             {
                 effect.transform.localPosition = children[i].localPosition;
                 yield return children[i].DOScale(Vector3.zero, 0.06f).WaitForCompletion();
-
+               
+               // UIManager.Ins.GetUI<GameplayUI>().SpawnIConBlock(block.PosionBlock, color);
                 LeanPool.Despawn(children[i]);
                 block.ListChildBlock[block.ListChildBlock.Count - 1 - i].SetDefaultBlockChild();
             }
@@ -311,20 +323,126 @@ public class Animation : Singleton<Animation>
             });
     }
 
+    public void EffectBlockChildTransition(System.Action onComplete = null)
+    {
+        int activeBlocks = 0; // Đếm số block có child
+
+        foreach (var block in GamePlayManager.Ins.BottomBlock)
+        {
+            if (block.transform.childCount == 0) continue;
+
+            activeBlocks++;
+
+            List<Vector3> oldPositions = new List<Vector3>();
+            List<Transform> children = new List<Transform>();
+
+            foreach (Transform child in block.transform)
+            {
+                oldPositions.Add(child.localPosition);
+                children.Add(child);
+
+                child.localPosition = new Vector3(0, 0.1f, 0);
+                child.gameObject.SetActive(true);
+            }
+
+            // Mỗi block sẽ báo hoàn thành 1 lần
+            StartCoroutine(MoveChildrenBack(children, oldPositions, () =>
+            {
+                activeBlocks--;
+
+                // Chỉ khi tất cả block xong thì mới gọi callback
+                if (activeBlocks == 0)
+                    onComplete?.Invoke();
+            }));
+        }
+
+        // Nếu không có block nào có child thì gọi luôn callback
+        if (activeBlocks == 0)
+            onComplete?.Invoke();
+    }
+
+    private IEnumerator MoveChildrenBack(List<Transform> children, List<Vector3> oldPositions, System.Action onComplete)
+    {
+        for (int i = 0; i < children.Count; i++)
+        {
+            children[i].DOLocalMove(oldPositions[i], 0.3f);
+            yield return new WaitForSeconds(0.1f);
+        }
+
+        // Báo cho block này đã xong
+        onComplete?.Invoke();
+    }
+
 
 
     public BlockControl ChooseRandomBlock()
     {
-        List<BlockControl> AllBlock = GamePlayManager.Ins.BottomBlock;
-        List<BlockControl> ListBlockRandom = new List<BlockControl>();
-        foreach (var i in AllBlock)
+        List<BlockControl> allBlock = GamePlayManager.Ins.BottomBlock;
+        List<BlockControl> listBlockRandom = new List<BlockControl>();
+
+        foreach (var block in allBlock)
         {
-            if(i.ListChildBlock.Count > 0)
+            if (block.ListChildBlock.Count > 0)
             {
-                  ListBlockRandom.Add(i);
+                listBlockRandom.Add(block);
             }
         }
-        int R = Random.Range(0,ListBlockRandom.Count);
-        return ListBlockRandom[R];
+
+        if (listBlockRandom.Count == 0)
+        {
+            Debug.LogWarning("Không tìm thấy block nào hợp lệ!");
+            return null;
+        }
+
+        int r = UnityEngine.Random.Range(0, listBlockRandom.Count);
+        return listBlockRandom[r];
     }
+    public void SetupTransformLevelGrid(Action onComplete = null)
+    {
+        // Đặt tất cả xuống y = -10 trước
+        foreach (var i in GamePlayManager.Ins.BottomBlock)
+        {
+            i.transform.position = new Vector3(i.transform.position.x, -30, i.transform.position.z);
+        }
+        // Tạo list index
+        List<int> IndexRandom = new List<int>();
+        for (int i = 0; i < GamePlayManager.Ins.BottomBlock.Count; i++)
+        {
+            IndexRandom.Add(i);
+        }
+        // Chạy coroutine để animate từng cái 1
+        StartCoroutine(PlayBlocks(IndexRandom, onComplete));
     }
+
+    private IEnumerator PlayBlocks(List<int> IndexRandom, Action onComplete)
+    {
+        while (IndexRandom.Count > 0)
+        {
+            int randomValue = GetRandomFromList(IndexRandom);
+            IndexRandom.Remove(randomValue);
+
+            Transform block = GamePlayManager.Ins.BottomBlock[randomValue].transform;
+            float targetY = GamePlayManager.Ins.BottomBlock[randomValue].PosionBlock.y;
+            foreach(Transform i in block)
+            {
+                i.gameObject.SetActive(false);
+            }
+            // Tween block này
+            block.DOMoveY(targetY, 0.5f).SetEase(Ease.OutBack);
+
+            yield return new WaitForSeconds(0.05f);
+        }
+
+        // Khi chạy xong toàn bộ thì gọi hàm onComplete
+        onComplete?.Invoke();
+    }
+
+    int GetRandomFromList(List<int> list)
+    {
+        if (list == null || list.Count == 0) return -1;
+        int randIndex = UnityEngine.Random.Range(0, list.Count);
+        return list[randIndex];
+    }
+}
+
+

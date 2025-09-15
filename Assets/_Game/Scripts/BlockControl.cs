@@ -37,6 +37,7 @@ public class BlockControl : MonoBehaviour
     private void Start()
     {
         Renderer = GetComponent<Renderer>();
+
     }
     public void DeleteLockCount()
     {
@@ -51,6 +52,7 @@ public class BlockControl : MonoBehaviour
     {
         Renderer.sharedMaterial = material;
     }
+
     private bool IsLocked()
     {
         return State == StateBlock.Lock || State == StateBlock.LockCount;

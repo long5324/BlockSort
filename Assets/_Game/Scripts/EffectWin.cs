@@ -57,12 +57,11 @@ public class EffectWin : MonoBehaviour
                 // Chờ theo time nếu cần
                 if (effect.Time)
                 {
-                    Debug.Log($"⏳ Chờ {effect.ValueTime} giây (theo Time)");
+                   
                     yield return new WaitForSeconds(effect.ValueTime);
                 }
             }
         }
-        Debug.Log("✅ Hoàn tất tất cả effect!");
     }
 
 }

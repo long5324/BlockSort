@@ -9,18 +9,22 @@ using UnityEngine.UI;
 
 public class HomeUI : UICanvas
 {
-    [SerializeField] private Button playBtn;
+    [Header("Button")]
+    [SerializeField]  Button playBtn;
     [SerializeField] Button RightButton;
     [SerializeField] Button LeftButton;
-    public TextMeshProUGUI LevelName;
-    IEnumerator WaitOffUI(List<CanvasGroup> ListUI)
-    {
-        yield return new WaitForSeconds(1);
-        foreach (CanvasGroup i in ListUI)
-        {
-            i.alpha = 0;
-        }
-    }
+    [Header("Text Mesh")]
+    [SerializeField] TextMeshProUGUI LevelName;
+    [SerializeField] TextMeshProUGUI NumberCoin;
+    [SerializeField] TextMeshProUGUI NumberEnegy;
+    [Header("UI Image Level")]
+    [SerializeField] DataHomeLevel levelData;
+    [SerializeField] Image imageFarLeft;
+    [SerializeField] Image imageLeft;
+    [SerializeField] Image imageCenter;
+    [SerializeField] Image imageRight;
+    [SerializeField] Image imageFarRight;
+    
     private void Awake()
     {
         playBtn.onClick.AddListener(StartGame);
@@ -33,6 +37,7 @@ public class HomeUI : UICanvas
     public override void Open()
     {
         base.Open();
+        UpdateCoin();
     }
 
 
@@ -45,13 +50,7 @@ public class HomeUI : UICanvas
         Close(0f);
         GameManager.Ins.SetUpLevel(currentIndex + 1);
     }
-    public DataHomeLevel levelData;
-
-    public Image imageFarLeft;
-    public Image imageLeft;
-    public Image imageCenter;
-    public Image imageRight;
-    public Image imageFarRight;
+  
 
     private int currentIndex = 0;
 
@@ -69,8 +68,13 @@ public class HomeUI : UICanvas
     private void Start()
     {
         UpdateUIImmediate();
+        
     }
-
+    public void UpdateCoin()
+    {
+        int CoinNumber = Currency.Ins.DataCurrency.coin;
+        NumberCoin.text = CoinNumber.ToString();
+    }
     public void NextLevel()
     {
         if (currentIndex < levelData.UIGameLevel.Count - 1)
@@ -80,7 +84,6 @@ public class HomeUI : UICanvas
             LevelName.text = "Level " + (currentIndex+1).ToString(); 
         }
     }
-
     public void PreviousLevel()
     {
         if (currentIndex > 0)

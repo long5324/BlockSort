@@ -25,10 +25,6 @@ public class ChildBlock : MonoBehaviour
      
     }
 
-    private void OnEnable()
-    {
-        ResetState();
-    }
-
+   
 
 }

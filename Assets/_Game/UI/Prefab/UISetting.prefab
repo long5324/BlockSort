@@ -161,6 +161,7 @@ GameObject:
   - component: {fileID: 9033497274707541105}
   - component: {fileID: 8208673987016478921}
   - component: {fileID: 7439754372724538573}
+  - component: {fileID: 496636366831107786}
   - component: {fileID: 5139790765136760781}
   - component: {fileID: 2289659240431690372}
   m_Layer: 5
@@ -235,6 +236,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &496636366831107786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 370358006020153268}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 40306178, guid: aa0b1eebb5db27a419fa4564bbe5c9c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  preset: 0
+  onEnableBehaviour: 1
+  onDisableBehaviour: 2
 --- !u!114 &5139790765136760781
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2034,7 +2050,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f565937caa35daf408268c33b8a82527, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  IsDestroyOnClose: 0
+  IsDestroyOnClose: 1
   CloseButton: {fileID: 3903625852619126057}
   RePlayButton: {fileID: 36285028037859342}
   NextLevelButton: {fileID: 1541638704010006877}

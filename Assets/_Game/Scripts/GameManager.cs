@@ -18,12 +18,13 @@ public class InfogameLevel
     public int NumberLever;
     public GameObject GameObjectLevel;
     public int ScoreMax;
+    public LevelReward LevelRewards;
 }
 public class GameManager : Singleton<GameManager>
 {
     public int MaxCurrenScore; 
     public List<InfogameLevel> ListGameLever;
-    int CurrenNumberLevel = 1;
+    public int CurrenNumberLevel { get; set; } = 1;
     public GameObject CurrenLevel;
     public GameObject LevelGame;
     public Block BlockData;
@@ -31,6 +32,7 @@ public class GameManager : Singleton<GameManager>
     private DataInport Data;
     public GameObject CurrenGamePlay;
     public GameObject PanelGamePlay;
+    public InfogameLevel CurrenLevelData;
     public InitGrid CurrenGridLevel { get; set; }
 
     private void Start()
@@ -60,8 +62,6 @@ public class GameManager : Singleton<GameManager>
     }
     public void SetUpLevel(int Number )
     {
-        UIManager.Ins.GetUI<GameplayUI>().Open();
-        UIManager.Ins.GetUI<GameplayUI>().StartIntro();
        
         AnimationControl.Ins.ResetStateAnimationControl();
         foreach (var i in ListGameLever)
@@ -92,10 +92,30 @@ public class GameManager : Singleton<GameManager>
         UpdateScore();
         GamePlayManager.Ins.UpdateListBlockLock();
         CurrenGridLevel = CurrenLevel.GetComponent<InitGrid>();
+        Animation.Ins.SetupTransformLevelGrid(() =>
+        {
+           
+            StartCoroutine(WaitEffectBlockChild());
+        });
+        
+    }
+    public void OpenUiGamePlay()
+    {
+        
         string NumberLevelName = "Level " + CurrenNumberLevel.ToString();
         UIManager.Ins.GetUI<GameplayUI>().SetupLevel(NumberLevelName, MaxCurrenScore.ToString());
+        UIManager.Ins.GetUI<GameplayUI>().Open();
+        UIManager.Ins.GetUI<GameplayUI>().StartIntro();
     }
-
+    private IEnumerator WaitEffectBlockChild()
+    {
+            yield return new WaitForSeconds(0.3f);
+        Animation.Ins.EffectBlockChildTransition(() =>
+        {
+            
+            OpenUiGamePlay();
+        });
+    }
     public void BackToHome()
     {
         foreach (Transform child in LevelGame.transform)
@@ -135,7 +155,6 @@ public class GameManager : Singleton<GameManager>
     public void Replay()
     {
         StopAllAnimations();
-
         foreach (Transform child in LevelGame.transform)
         {
             Destroy(child.gameObject);
@@ -165,6 +184,11 @@ public class GameManager : Singleton<GameManager>
             }
         }
         UpdateScore();
+        CurrenGridLevel = CurrenLevel.GetComponent<InitGrid>();
+        Animation.Ins.SetupTransformLevelGrid(() =>
+        {
+            OpenUiGamePlay();
+        });
     }
     public void Reroll()
     {
