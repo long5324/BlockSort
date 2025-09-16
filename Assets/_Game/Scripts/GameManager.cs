@@ -28,12 +28,13 @@ public class GameManager : Singleton<GameManager>
     public GameObject CurrenLevel;
     public GameObject LevelGame;
     public Block BlockData;
-    public GameObject GamePlay;
+    public  GameObject GamePlay;
     private DataInport Data;
     public GameObject CurrenGamePlay;
     public GameObject PanelGamePlay;
     public InfogameLevel CurrenLevelData;
     public InitGrid CurrenGridLevel { get; set; }
+    public RectTransform MainCanvasRect;
 
     private void Start()
     {
@@ -41,16 +42,51 @@ public class GameManager : Singleton<GameManager>
         MaxCurrenScore = ListGameLever[0].ScoreMax;
         UIManager.Ins.OpenUI<HomeUI>();
     }
-    public static void ScaleByAspectRatio(Transform target, float baseScale = 1f)
+    public static void ScaleParentToFitScreen(Transform parent, Camera cam, float baseScale = 1f)
     {
-        float refAspect = 1080f / 1920f; // chuẩn 9:16
-        float currentAspect = (float)Screen.width / Screen.height;
+        if (parent == null || cam == null) return;
 
-        // tính độ lệch so với tỉ lệ chuẩn
-        float ratio = currentAspect / refAspect;
+        // Reset scale trước để đo bounds chính xác
+        parent.localScale = Vector3.one * baseScale;
 
-        // bạn muốn ip12 = 0.9 thì nhân thêm hệ số
-        target.localScale = Vector3.one * (baseScale * ratio);
+        // Gom tất cả renderer con
+        Renderer[] renderers = parent.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0) return;
+
+        Bounds bounds = renderers[0].bounds;
+        foreach (var rend in renderers)
+            bounds.Encapsulate(rend.bounds);
+
+        // Tính ra các điểm góc của bounds
+        Vector3[] corners = new Vector3[8];
+        corners[0] = bounds.min;
+        corners[1] = new Vector3(bounds.min.x, bounds.min.y, bounds.max.z);
+        corners[2] = new Vector3(bounds.min.x, bounds.max.y, bounds.min.z);
+        corners[3] = new Vector3(bounds.max.x, bounds.min.y, bounds.min.z);
+        corners[4] = new Vector3(bounds.max.x, bounds.max.y, bounds.min.z);
+        corners[5] = new Vector3(bounds.max.x, bounds.min.y, bounds.max.z);
+        corners[6] = new Vector3(bounds.min.x, bounds.max.y, bounds.max.z);
+        corners[7] = bounds.max;
+
+        // Tìm scale nhỏ nhất để toàn bộ góc nằm trong màn hình
+        float minScale = float.MaxValue;
+        foreach (var c in corners)
+        {
+            Vector3 vp = cam.WorldToViewportPoint(c);
+            if (vp.z < 0) continue; // nằm sau camera thì bỏ qua
+
+            float sx = (vp.x > 1) ? 1f / vp.x : (vp.x < 0) ? (0f - vp.x) / vp.x : 1f;
+            float sy = (vp.y > 1) ? 1f / vp.y : (vp.y < 0) ? (0f - vp.y) / vp.y : 1f;
+
+            float safeScale = Mathf.Min(sx, sy);
+            if (safeScale < minScale)
+                minScale = safeScale;
+        }
+
+        if (minScale < 1f && minScale > 0f)
+        {
+            parent.localScale *= minScale; // scale toàn bộ object cha
+        }
     }
 
 
@@ -62,7 +98,15 @@ public class GameManager : Singleton<GameManager>
     }
     public void SetUpLevel(int Number )
     {
-       
+        GamePlayManager.Ins.SetPause(true);
+        StopAllAnimations();
+        if(LevelGame.transform.childCount > 0)
+        {
+            foreach (Transform child in LevelGame.transform)
+            {
+                Destroy(child.gameObject);
+            }
+        }
         AnimationControl.Ins.ResetStateAnimationControl();
         foreach (var i in ListGameLever)
         {
@@ -70,7 +114,7 @@ public class GameManager : Singleton<GameManager>
             {
                 CurrenNumberLevel = Number;
                 CurrenLevel = Instantiate(i.GameObjectLevel, Vector3.zero, Quaternion.identity);
-                ScaleByAspectRatio(CurrenLevel.transform);
+                
                 CurrenGamePlay = Instantiate(GamePlay, Vector3.zero, Quaternion.identity);
                 CurrenLevel.transform.SetParent(LevelGame.transform, false);
                 CurrenGamePlay.transform.SetParent(LevelGame.transform, false);
@@ -97,7 +141,7 @@ public class GameManager : Singleton<GameManager>
            
             StartCoroutine(WaitEffectBlockChild());
         });
-        
+        ScaleParentToFitScreen(LevelGame.transform, Camera.main, 1f);
     }
     public void OpenUiGamePlay()
     {
@@ -106,6 +150,7 @@ public class GameManager : Singleton<GameManager>
         UIManager.Ins.GetUI<GameplayUI>().SetupLevel(NumberLevelName, MaxCurrenScore.ToString());
         UIManager.Ins.GetUI<GameplayUI>().Open();
         UIManager.Ins.GetUI<GameplayUI>().StartIntro();
+        UIManager.Ins.GetUI<GameplayUI>().UnClickCButton();
     }
     private IEnumerator WaitEffectBlockChild()
     {
@@ -134,7 +179,7 @@ public class GameManager : Singleton<GameManager>
     void UpdateScore()
     {
         Data.gamePlayManager.CurrenScore = 0;
-        UIManager.Ins.GetUI<GameplayUI>().SetFillScore(0, 10);
+        UIManager.Ins.GetUI<GameplayUI>().SetScore(0, 10);
         foreach (var i in ListGameLever)
         {
             if (i.NumberLever == CurrenNumberLevel)
@@ -143,53 +188,20 @@ public class GameManager : Singleton<GameManager>
                 break;
             }
         }
-        UIManager.Ins.GetUI<GameplayUI>().SetTextScore(Data.gamePlayManager.CurrenScore.ToString() + "/" + MaxCurrenScore.ToString());
+        UIManager.Ins.GetUI<GameplayUI>().SetScore(Data.gamePlayManager.CurrenScore, MaxCurrenScore);
     }
     public void StopAllAnimations()
     {
         StopAllCoroutines();
-        DOTween.KillAll();
         Data.animationControl.IsRun = false;
     }
 
     public void Replay()
     {
-        StopAllAnimations();
-        foreach (Transform child in LevelGame.transform)
-        {
-            Destroy(child.gameObject);
-        }
-        foreach (var i in ListGameLever)
-        {
-            if (i.NumberLever == CurrenNumberLevel)
-            {
-                CurrenLevel = Instantiate(i.GameObjectLevel, Vector3.zero, Quaternion.identity);
-                CurrenGamePlay = Instantiate(GamePlay, Vector3.zero, Quaternion.identity);
-                ScaleByAspectRatio(CurrenLevel.transform);
-                CurrenLevel.transform.SetParent(LevelGame.transform, false);
-                CurrenGamePlay.transform.SetParent(LevelGame.transform, false);
-                List<GameObject> ListBlockGamePlay = new List<GameObject>();
-                List<Vector3> DefaulP = new List<Vector3>();
-                foreach (Transform j in CurrenGamePlay.transform)
-                {
-                    ListBlockGamePlay.Add(j.gameObject);
-                    DefaulP.Add(j.position);
-                }
-                Data.gamePlayManager.ListDefaulPossitionBlockGamePlay = DefaulP;
-                Data.gamePlayManager.BottomBlock = CurrenLevel.GetComponent<InitGrid>().ListblockGround;
-                Data.gamePlayManager.ListBlockGamePlay = ListBlockGamePlay;
-                Data.gamePlayManager.RandomSpawnBlockChild();
-                CurrenGridLevel = CurrenLevel.GetComponent<InitGrid>();
-                break;
-            }
-        }
-        UpdateScore();
-        CurrenGridLevel = CurrenLevel.GetComponent<InitGrid>();
-        Animation.Ins.SetupTransformLevelGrid(() =>
-        {
-            OpenUiGamePlay();
-        });
+        SetUpLevel(CurrenNumberLevel );
+       
     }
+
     public void Reroll()
     {
         // Lấy ObjectGamePlay
@@ -311,7 +323,6 @@ public class GameManager : Singleton<GameManager>
             Destroy(child.gameObject);
         }
         SetUpLevel(CurrenNumberLevel + 1);
-       // Data.gamePlayManager.SetPause(false);
         UpdateScore();
     }
 

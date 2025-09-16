@@ -1,5 +1,6 @@
 ﻿using DG.Tweening;
 using DG.Tweening.Core.Easing;
+using HumanSort;
 using JetBrains.Annotations;
 using Lean.Pool;
 using System.Collections.Generic;
@@ -49,6 +50,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     private bool RunBoosters = false;
     private List<BlockControl> ListBlockLock = new List<BlockControl>();
     private DataInport Data;
+    public  bool TutorialActive { get; set; } = false;
     private void Start()
     {
         Data = DataInport.Ins;
@@ -83,6 +85,14 @@ public class GamePlayManager : Singleton<GamePlayManager>
     }
     private void Update()
     {
+        if (TutorialActive)
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                Tutorial.Ins.Off();
+                TutorialActive = false;
+            }
+        }
         if (selectedBlock==null&&RunBoosters && !AnimationControl.Ins.IsRun && !AnimationControl.Ins.ScorePlus)
         {
             if(Input.GetMouseButtonDown(0))
@@ -103,7 +113,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
             }
         }
         if (pause) return;
-       
+
         if (selectedBlock == null && Input.GetMouseButtonDown(0))
         {
             TargetBlockPlay();
@@ -127,6 +137,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     }
     public void SetPause(bool p)
     {
+        
         pause = p;
     }
     public void setColliderSize()
@@ -186,7 +197,8 @@ public class GamePlayManager : Singleton<GamePlayManager>
             if (TargetBlock.State != StateBlock.Nomal) return;
             if (TargetBlock.transform.childCount == 0) return;
             if (StateBooter == Boosters.DestroyBlock)
-            { 
+            {
+              
                 RunBoostersBreackBlock(TargetBlock);
                 EndBoosters();
                 RunBoosters = false;
@@ -208,6 +220,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
                     newObject.ListChildBlock.AddRange(TargetBlock.ListChildBlock);
                     TargetBlock.ListChildBlock.Clear();
                     selectedBlock = newObject;
+                  
                 }
 
             }
@@ -367,8 +380,16 @@ public class GamePlayManager : Singleton<GamePlayManager>
     void EndClicK()
     {
         if(selectedBlock == null) { return; }
+        if (TargetBlock == null && RunBoosters)
+        {
+            SetBlock();
+            selectedBlock = null;
+            TargetBlock = null;
+            return;
+        }
         if (TargetBlock == null)
-            for (int i = 0; i < ListBlockGamePlay.Count; i++)
+
+                for (int i = 0; i < ListBlockGamePlay.Count; i++)
             {
                 ListBlockGamePlay[i].transform.position = ListDefaulPossitionBlockGamePlay[i];
             }
@@ -415,8 +436,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     public void UpdateSocre(int NumberSocre)
     {
         CurrenScore += NumberSocre;
-        UIManager.Ins.GetUI<GameplayUI>().SetFillScore(CurrenScore, Data.gameManager.MaxCurrenScore);
-        UIManager.Ins.GetUI<GameplayUI>().SetTextScore(CurrenScore.ToString() + "/" + Data.gameManager.MaxCurrenScore.ToString());
+        UIManager.Ins.GetUI<GameplayUI>().SetScore(CurrenScore, Data.gameManager.MaxCurrenScore);
         if (CurrenScore >= Data.gameManager.MaxCurrenScore)
         {
             Data.gameManager.Winlevel();
@@ -562,7 +582,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
             GameManager.Ins.PanelGamePlay.transform.DORotate(new Vector3(-16, 0, 16), 1f);
             foreach (RectTransform t in gameplayUI.TranformButtonBoosters)
             {
-                t.DOAnchorPos3DY(-300, 0.5f);
+                t.DOAnchorPos3DY(-700, 0.5f);
             }
             TranformGamePlay.DOLocalMoveY(-10, 0.5f).OnComplete(() =>
             {

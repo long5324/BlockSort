@@ -196,7 +196,7 @@ public class Animation : Singleton<Animation>
         }
         return children;
     }
-
+     
     private BlockControl GetSupportBlock(BlockControl block)
     {
         foreach (var j in block.BlockLink)

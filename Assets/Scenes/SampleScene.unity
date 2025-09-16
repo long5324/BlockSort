@@ -381,6 +381,7 @@ MonoBehaviour:
     LevelRewards:
       ChooseCurrency: 0
       NumberItem: 0
+  MainCanvasRect: {fileID: 8035321547639940686}
 --- !u!1 &1371766475233307762
 GameObject:
   m_ObjectHideFlags: 0
@@ -571,8 +572,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_RenderShadows: 1
-  m_RequiresDepthTextureOption: 2
-  m_RequiresOpaqueTextureOption: 2
+  m_RequiresDepthTextureOption: 1
+  m_RequiresOpaqueTextureOption: 1
   m_CameraType: 0
   m_Cameras: []
   m_RendererIndex: 0
@@ -1157,6 +1158,7 @@ MonoBehaviour:
   - {fileID: 6079436646181954837, guid: e05c7660d6c1fdb4e8d76e45368f13d4, type: 3}
   - {fileID: 1881048399244779010, guid: d964836013b00e341b8af9cca64517e3, type: 3}
   - {fileID: 1211377041571208996, guid: 00c38857391e75a44b6740d9f4bd2534, type: 3}
+  - {fileID: 0}
   canvasParentTF: {fileID: 8035321547639940686}
   IsBlockRay: 0
 --- !u!81 &6550639507112354266
@@ -1513,8 +1515,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DataCurrency:
-    coin: 0
+    coin: 100000
     gem: 0
+  NumberCoinAdd: 100000
 --- !u!4 &8006558431696528924
 Transform:
   m_ObjectHideFlags: 0
@@ -1627,7 +1630,7 @@ SpriteRenderer:
   m_Size: {x: 10.24, y: 15.36}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &8379096287838170145

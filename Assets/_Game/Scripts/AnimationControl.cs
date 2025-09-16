@@ -68,9 +68,9 @@ public class AnimationControl : Singleton<AnimationControl>
     public void ResetStateAnimationControl()
     {
         IsRun = false;
-       ScorePlus = false;
-       delaysort = false;
-       DeLayCheckScore = null;
+        ScorePlus = false;
+        delaysort = false;
+        DeLayCheckScore = null;
     }
     public IEnumerator DelayCheckSocre()
     {

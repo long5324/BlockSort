@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Sirenix.OdinInspector;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO; // để dùng File IO
 using UnityEngine;
@@ -6,12 +7,11 @@ using UnityEngine;
 public enum StateCurrency
 {
     coin,
-    gem
+    gem,
 }
 [System.Serializable]
 public struct LevelReward
 {
-
     public StateCurrency ChooseCurrency;
     public int NumberItem;
 }
@@ -20,7 +20,6 @@ public class InfoCurrency
 {
     public int coin;
     public int gem;
- 
 }
 
 public class Currency : Singleton<Currency>
@@ -29,13 +28,32 @@ public class Currency : Singleton<Currency>
 
     private string savePath;
 
+    [Header("Coin Change")]
+    [SerializeField] int NumberCoinAdd; 
+    [Button(ButtonSizes.Large)]
+    public void AddCoin()
+    {
+        savePath = Path.Combine(Application.persistentDataPath, "currency.json");
+
+        LoadData();
+        SetDataCoin(NumberCoinAdd);
+    }
+    [Button(ButtonSizes.Large)]
+    public void DeleteCoin()
+    {
+        savePath = Path.Combine(Application.persistentDataPath, "currency.json");
+
+        LoadData();
+        SetDataCoin(0);
+
+    }
     private void Awake()
     {
         savePath = Path.Combine(Application.persistentDataPath, "currency.json");
 
         LoadData(); 
     }
-
+    
     public void SetDataCoin(int value)
     {
         DataCurrency.coin = value;
@@ -56,7 +74,7 @@ public class Currency : Singleton<Currency>
 
     public void SaveData()
     {
-        string json = JsonUtility.ToJson(DataCurrency, true); // true = format đẹp
+        string json = JsonUtility.ToJson(DataCurrency, true); 
         File.WriteAllText(savePath, json);
         Debug.Log("Đã lưu: " + savePath);
     }
@@ -70,9 +88,9 @@ public class Currency : Singleton<Currency>
         }
         else
         {
-            // Nếu chưa có file thì tạo mới
             DataCurrency = new InfoCurrency();
             SaveData();
         }
     }
+    
 }
