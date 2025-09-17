@@ -23,6 +23,9 @@ public class InitGrid : MonoBehaviour
     [SerializeField] GameObject ObjectPrefabLock;
     [SerializeField] GameObject ObjectPrefabLockCount;
     [SerializeField] GameObject ObjectPrefabUpport;
+    public ParticleSystem EffectSelectBlock;
+    public ParticleSystem ParticleEffectSetBlock;
+    public ParticleSystem ParticleEffectHammer;
     public List<BlockControl> ListblockGround = new List<BlockControl>();
     public DragRotate rotate;
     private List<Vector3> CenterGird = new List<Vector3>();
@@ -75,17 +78,44 @@ public class InitGrid : MonoBehaviour
                 newFrontier.AddRange(neighbors);
             }
 
-            frontier = newFrontier; 
+            frontier = newFrontier;
         }
-      
-        foreach(var i in ListblockGround)
+
+        foreach (var i in ListblockGround)
         {
-         
-           if(i!=null)
-            i.SpawnBlockChild();
+
+            if (i != null)
+                i.SpawnBlockChild();
+            if (i.State != StateBlock.Nomal)
+            {
+                {
+                    i.DeleteAllLockCount();
+                }
+            }
         }
-        SetupBlock();
-        
+            SetupBlock();
+            FitCollider();
+  }
+    
+    public void FitCollider()
+    {
+        // Lấy hoặc thêm BoxCollider cho parent
+        BoxCollider box = GetComponent<BoxCollider>();
+        if (box == null)
+            box = gameObject.AddComponent<BoxCollider>();
+
+        // Tạo bounds rỗng với vị trí parent
+        Bounds bounds = new Bounds(transform.position, Vector3.zero);
+
+        // Duyệt tất cả renderer của con để mở rộng bounds
+        foreach (Renderer rend in GetComponentsInChildren<Renderer>())
+        {
+            bounds.Encapsulate(rend.bounds);
+        }
+
+        // Gán size và center cho BoxCollider cha
+        box.center = transform.InverseTransformPoint(bounds.center);
+        box.size = bounds.size;
     }
     public void SetupBlock()
     {
@@ -229,7 +259,6 @@ public class InitGrid : MonoBehaviour
             {
                 if (bcComponent.GameObjectMod != null)
                 {
-                    DestroyImmediate(bcComponent.GameObjectMod.gameObject);
                     bcComponent.GameObjectMod = null;
                 }
                 bcComponent.PosionBlock = i.localPosition;
@@ -294,7 +323,6 @@ public class InitGrid : MonoBehaviour
         {
             foreach (Transform i in transform)
             {
-                if (Vector3.zero == Center) Debug.Log(i.localPosition  + "  " + j);
                 Vector3 local = i.localPosition;
                 if (j == local)
                 {
@@ -397,6 +425,15 @@ public class InitGrid : MonoBehaviour
             ObjectLock.transform.localScale = new Vector3(0.4f, 1f, 0.4f);
             ObjectLock.transform.localPosition = Vector3.zero + new Vector3(-0.004f,0.011f, 0.004f);
             bcComponent.GameObjectMod = ObjectLock;
+
+            int targetCount = 4 - bcComponent.CountLock -1;
+
+            for (int i = targetCount ; i >= 0; i--)
+            {
+                GameObject child = ObjectLock.transform.GetChild(i).gameObject;
+                DestroyImmediate(child);
+            }
+
         }
         else if (bcComponent.State == StateBlock.Support)
         {

@@ -31,6 +31,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     public ParticleSystem EffectDestroyBlock;
     public ParticleSystem EffectBlockEat;
     public Block DataBlockChild;
+   
     private Camera cam;
     private ObjectSet selectedBlock = null;
     public BlockControl TargetBlock { get; set; }
@@ -125,7 +126,6 @@ public class GamePlayManager : Singleton<GamePlayManager>
         }
         if (Input.GetMouseButtonUp(0))
         {
-           
             SetAllDefaut();
             EndClicK();
         }
@@ -188,17 +188,17 @@ public class GamePlayManager : Singleton<GamePlayManager>
             BlockControl TargetBlock  =  hit.collider.gameObject.GetComponent<BlockControl>();
             if (TargetBlock == null) return;
             Debug.Log(TargetBlock.State);
-            if(TargetBlock.State == StateBlock.LockCount)
+            if(TargetBlock.State == StateBlock.LockCount && StateBooter == Boosters.DestroyBlock)
             {
                 Animation.Ins.HandleBlockBlockTarget(TargetBlock);
                 EndBoosters();
                 RunBoosters = false;
+                return;
             }
             if (TargetBlock.State != StateBlock.Nomal) return;
             if (TargetBlock.transform.childCount == 0) return;
             if (StateBooter == Boosters.DestroyBlock)
             {
-              
                 RunBoostersBreackBlock(TargetBlock);
                 EndBoosters();
                 RunBoosters = false;
@@ -272,8 +272,12 @@ public class GamePlayManager : Singleton<GamePlayManager>
                     if (TargetBlock.State == StateBlock.Lock)
                         return;
                     TargetBlock.SetColor(LightMaterial);
+                    Transform PostionLightEfffect = Data.gameManager.CurrenGridLevel.EffectSelectBlock.transform;
+                    PostionLightEfffect.gameObject.SetActive(true);
+                    PostionLightEfffect.localPosition = new Vector3(TargetBlock.transform.localPosition.x, PostionLightEfffect.localPosition.y, TargetBlock.transform.localPosition.z);
                     if (TargetBlock.transform.childCount > 0)
                     {
+                        PostionLightEfffect.gameObject.SetActive(false);
                         TargetBlock.BacktoDFColor();
                     }
                 }
@@ -346,6 +350,8 @@ public class GamePlayManager : Singleton<GamePlayManager>
     void SetAllDefaut()
     {
         if (TargetBlock == null) return;
+        Transform PostionLightEfffect = Data.gameManager.CurrenGridLevel.EffectSelectBlock.transform;
+        PostionLightEfffect.gameObject.SetActive(false);
         TargetBlock.GetComponent<BlockControl>().BacktoDFColor();
     }
 
@@ -406,7 +412,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         selectedBlock = null;
         TargetBlock = null;
     }
-    public BlockControl BlockChangeTg;
+    private BlockControl BlockChangeTg;
     void SetBlock()
     {
         if((TargetBlock == null || TargetBlock.transform.childCount > 0 || TargetBlock.State == StateBlock.Lock) && RunBoosters)
@@ -420,8 +426,14 @@ public class GamePlayManager : Singleton<GamePlayManager>
             selectedBlock.ListChildBlock[i].transform.localPosition = new Vector3(0,sizeYBlock*(i+1),0);
             selectedBlock.ListChildBlock[i].transform.localRotation = Quaternion.identity;
             selectedBlock.ListChildBlock[i].transform.localScale = baseScale;
+           
             TargetBlock.ListChildBlock.Add(selectedBlock.ListChildBlock[i]);
         }
+        ParticleSystem EffectSetBlock = GameManager.Ins.CurrenGridLevel.ParticleEffectSetBlock;
+        EffectSetBlock.gameObject.SetActive(true);
+        EffectSetBlock.gameObject.transform.SetParent(GameManager.Ins.CurrenGridLevel.transform);
+        EffectSetBlock.gameObject.transform.localPosition = TargetBlock.transform.localPosition + new Vector3(0, 0.1f, 0);
+
         if (Data.animationControl.ScorePlus || Data.animationControl.IsRun)
         {
             DelayCheck.Add(TargetBlock.PosionBlock);
@@ -550,6 +562,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         {
             LeanPool.Despawn(child);
         }
+        GameManager.Ins.CurrenGridLevel.ParticleEffectHammer.gameObject.SetActive(true);
         ParticleSystem effect = Instantiate(EffectDestroyBlock);
         effect.transform.SetParent(TargetBlock.transform, false);
         effect.transform.localPosition = new Vector3(0, 0.003f, 0);

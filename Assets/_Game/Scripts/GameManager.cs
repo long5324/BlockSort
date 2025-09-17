@@ -42,54 +42,6 @@ public class GameManager : Singleton<GameManager>
         MaxCurrenScore = ListGameLever[0].ScoreMax;
         UIManager.Ins.OpenUI<HomeUI>();
     }
-    public static void ScaleParentToFitScreen(Transform parent, Camera cam, float baseScale = 1f)
-    {
-        if (parent == null || cam == null) return;
-
-        // Reset scale trước để đo bounds chính xác
-        parent.localScale = Vector3.one * baseScale;
-
-        // Gom tất cả renderer con
-        Renderer[] renderers = parent.GetComponentsInChildren<Renderer>();
-        if (renderers.Length == 0) return;
-
-        Bounds bounds = renderers[0].bounds;
-        foreach (var rend in renderers)
-            bounds.Encapsulate(rend.bounds);
-
-        // Tính ra các điểm góc của bounds
-        Vector3[] corners = new Vector3[8];
-        corners[0] = bounds.min;
-        corners[1] = new Vector3(bounds.min.x, bounds.min.y, bounds.max.z);
-        corners[2] = new Vector3(bounds.min.x, bounds.max.y, bounds.min.z);
-        corners[3] = new Vector3(bounds.max.x, bounds.min.y, bounds.min.z);
-        corners[4] = new Vector3(bounds.max.x, bounds.max.y, bounds.min.z);
-        corners[5] = new Vector3(bounds.max.x, bounds.min.y, bounds.max.z);
-        corners[6] = new Vector3(bounds.min.x, bounds.max.y, bounds.max.z);
-        corners[7] = bounds.max;
-
-        // Tìm scale nhỏ nhất để toàn bộ góc nằm trong màn hình
-        float minScale = float.MaxValue;
-        foreach (var c in corners)
-        {
-            Vector3 vp = cam.WorldToViewportPoint(c);
-            if (vp.z < 0) continue; // nằm sau camera thì bỏ qua
-
-            float sx = (vp.x > 1) ? 1f / vp.x : (vp.x < 0) ? (0f - vp.x) / vp.x : 1f;
-            float sy = (vp.y > 1) ? 1f / vp.y : (vp.y < 0) ? (0f - vp.y) / vp.y : 1f;
-
-            float safeScale = Mathf.Min(sx, sy);
-            if (safeScale < minScale)
-                minScale = safeScale;
-        }
-
-        if (minScale < 1f && minScale > 0f)
-        {
-            parent.localScale *= minScale; // scale toàn bộ object cha
-        }
-    }
-
-
     IEnumerator WaitSpawn()
     {
         yield return new WaitForSeconds(1);
@@ -114,7 +66,6 @@ public class GameManager : Singleton<GameManager>
             {
                 CurrenNumberLevel = Number;
                 CurrenLevel = Instantiate(i.GameObjectLevel, Vector3.zero, Quaternion.identity);
-                
                 CurrenGamePlay = Instantiate(GamePlay, Vector3.zero, Quaternion.identity);
                 CurrenLevel.transform.SetParent(LevelGame.transform, false);
                 CurrenGamePlay.transform.SetParent(LevelGame.transform, false);
@@ -129,7 +80,6 @@ public class GameManager : Singleton<GameManager>
                 Data.gamePlayManager.BottomBlock = CurrenLevel.GetComponent<InitGrid>().ListblockGround;
                 Data.gamePlayManager.ListBlockGamePlay = ListBlockGamePlay;
                 Data.gamePlayManager.RandomSpawnBlockChild();
-              
                 break;
             }
         }
@@ -141,7 +91,6 @@ public class GameManager : Singleton<GameManager>
            
             StartCoroutine(WaitEffectBlockChild());
         });
-        ScaleParentToFitScreen(LevelGame.transform, Camera.main, 1f);
     }
     public void OpenUiGamePlay()
     {
@@ -307,12 +256,21 @@ public class GameManager : Singleton<GameManager>
         UIManager.Ins.GetUI<GameplayUI>().Close(0f);
         DestroyLever();
     }
-   public void Winlevel()
+    public void Winlevel()
     {
-        Data.gamePlayManager.SetPause(true);
-        UIManager.Ins.GetUI<VictoryUI>().Open();
         UIManager.Ins.GetUI<GameplayUI>().Close(0f);
+        Data.gamePlayManager.SetPause(true);
+        StartCoroutine(ShowVictoryUI());
     }
+
+    private IEnumerator ShowVictoryUI()
+    {
+        yield return new WaitForSeconds(1f); // đợi 1s
+
+        UIManager.Ins.GetUI<VictoryUI>().Open();
+       
+    }
+
     public void NextLevel()
     {
         if (CurrenNumberLevel + 1 > ListGameLever.Count) return;

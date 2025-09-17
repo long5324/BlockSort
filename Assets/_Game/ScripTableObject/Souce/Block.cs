@@ -15,9 +15,7 @@ public enum BlockColor
     Yellow,
     Black,
     White,
-    Pink,
-    CheckBottomColor,
-    DefautColor
+    Pink
 }
 [Serializable]
 public struct BlockData

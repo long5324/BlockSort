@@ -1,6 +1,6 @@
 ﻿//--------------------------------------------------------------------------------------------------------------------------------
 // Cartoon FX
-// (c) 2012-2022 Jean Moreno
+// (c) 2012-2025 Jean Moreno
 //--------------------------------------------------------------------------------------------------------------------------------
 
 using System.Collections.Generic;
@@ -42,13 +42,11 @@ namespace CartoonFX
         [SerializeField] CFXR_ParticleTextFontAsset font;
 #pragma warning restore 0649
 
+#if UNITY_EDITOR
         [HideInInspector] [SerializeField] bool autoUpdateEditor = true;
 
-#if UNITY_EDITOR
         void OnValidate()
         {
-            this.hideFlags = isDynamic ? HideFlags.None : HideFlags.DontSaveInBuild;
-
             if (text == null || font == null)
             {
                 return;
@@ -91,10 +89,13 @@ namespace CartoonFX
 
         void Awake()
         {
-            if (isDynamic)
+            if (!isDynamic)
             {
-                InitializeFirstParticle();
+                Destroy(this);
+                return;
             }
+
+            InitializeFirstParticle();
         }
 
         float baseLifetime;
@@ -117,6 +118,12 @@ namespace CartoonFX
             baseScaleY = main.startSizeYMultiplier;
             baseScaleZ = main.startSizeZMultiplier;
             basePivot = ps.GetComponent<ParticleSystemRenderer>().pivot;
+            if (isDynamic)
+            {
+                basePivot.x = 0; // make sure to not offset the text horizontally
+                ps.gameObject.SetActive(false); // ensure first child is inactive
+                ps.gameObject.name = "MODEL";
+            }
         }
 
         public void UpdateText(
@@ -148,7 +155,7 @@ namespace CartoonFX
 
             if (Application.isPlaying && !isDynamic)
             {
-                throw new System.Exception("[CFXR_ParticleText] You cannot update the text if it's not marked as dynamic.");
+                throw new System.Exception("[CFXR_ParticleText] You cannot update the text at runtime if it's not marked as dynamic.");
             }
 
             if (newText != null)
@@ -299,6 +306,7 @@ namespace CartoonFX
                         if (!isDynamic)
                         {
                             EditorUtility.CopySerialized(sourceParticle, ps);
+                            ps.gameObject.SetActive(true);
                         }
 #endif
 

@@ -34,18 +34,30 @@ public class BlockControl : MonoBehaviour
     public GameObject GameObjectMod;
     [ShowIf("State",StateBlock.LockCount)]
     public ParticleSystem Effect;
+    [ShowIf("State", StateBlock.LockCount)]
+    [Range(1, 4)] public int CountLock = 4;
     private void Start()
     {
         Renderer = GetComponent<Renderer>();
 
     }
+    public void DeleteAllLockCount()
+    {
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+            GameObject child = transform.GetChild(i).gameObject;
+           DestroyImmediate(child);
+        }
+    }
     public void DeleteLockCount()
     {
         if (GameObjectMod == null) return;
-        Destroy(GameObjectMod.transform.GetChild(0).gameObject);
+        GameObject child = GameObjectMod.transform.GetChild(0).gameObject;
+        DestroyImmediate(child);
     }
     public int CheckCount()
     {
+       
         return GameObjectMod.transform.childCount;
     }
     public void SetColor(Material material)
@@ -267,7 +279,7 @@ public class BlockControl : MonoBehaviour
      PosionBlock = bc.PosionBlock;
      Renderer  = bc.Renderer;
      BlockLink = bc.BlockLink;
-}
+    }
     public List<BlockControl> CheckArow()
     {
         List<BlockControl> ListBlock = new List<BlockControl>();

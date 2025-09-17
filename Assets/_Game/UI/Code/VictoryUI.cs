@@ -17,7 +17,7 @@ public class VictoryUI : UICanvas
     [SerializeField] TextMeshProUGUI CurrenCoinText;
     [SerializeField] List<ParticleSystem> EffectVitory;
     [SerializeField] List<GameObject> GameObjectWin;
-  
+    [SerializeField] GameObject CoinMoveEffect;
     private void Start()
     {
         RePlayButton.onClick.AddListener(Replay);
@@ -58,6 +58,10 @@ public class VictoryUI : UICanvas
     {
         yield return new WaitForSeconds(Time);
         SetActiveEventButton(true);
+        CoinMoveEffect.SetActive(true);
+    }
+    public void EffectPlusCoin()
+    {
         int lastcoin = Currency.Ins.DataCurrency.coin;
         Currency.Ins.AddCoin(GameManager.Ins.ListGameLever[GameManager.Ins.CurrenNumberLevel - 1].LevelRewards.NumberItem);
         int CurrenCoin = Currency.Ins.DataCurrency.coin;

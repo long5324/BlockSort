@@ -5,7 +5,7 @@ public class DragRotate : MonoBehaviour
 {
     public LayerMask draggableLayer;
     public float rotationSpeed = 0.5f;
-    public float snapAngle = 45f;   // snap theo bậc 45 độ
+    public float snapAngle = 90f;   // snap theo bậc 45 độ
     public float snapDuration = 0.25f; // thời gian tween snap
 
     private Transform target;

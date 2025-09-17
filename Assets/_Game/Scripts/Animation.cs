@@ -144,46 +144,47 @@ public class Animation : Singleton<Animation>
             .SetEase(Ease.InOutSine);  
     }
     Vector3 SalceCahe;
-    BlockControl BCT = null;
+    BlockControl bc = null;
+    BlockControl maxBc = null;
+    int Maxscore;
     public IEnumerator PlusScore(BlockControl block, int score, float delay, bool c)
     {
+        
         yield return new WaitForSeconds(delay);
 
-        // 1. Lấy danh sách child sẽ xoá
-        var children = GetChildrenToRemove(block, score);
 
-        // 2. Lấy block Support
-        BlockControl bc = GetSupportBlock(block);
+            Maxscore = score;
+            maxBc = block;
+        if (score > Maxscore) { 
+             score = Maxscore;
+             maxBc = block;
+        }
 
+         // 1. Lấy danh sách child sẽ xoá
+         var children = GetChildrenToRemove(block, score);
         // 3. Spawn effect
         ParticleSystem effect = SpawnEatEffect(block, score);
 
         // 4. Nếu có block Support thì squash
-        if (bc != null) Squash(bc, 0.06f * children.Count);
+        if (bc == null && GetSupportBlock(block) != null) {
+            bc = GetSupportBlock(block);
+            Squash(bc, 0.06f * children.Count);   
+        }
 
         // 5. Xử lý xoá từng child + animation
         yield return RemoveChildren(block, children, effect);
 
+        if(score == Maxscore)
+        {
+            HandleContinue(block);
+        }
         // 6. Xoá effect
         DestroyEffect(effect);
-
         // 7. Update score + data
-
         FinalizeScore(block, children);
         // 8. Xử lý tiếp (cờ c = true)
-        HandleContinue(block, bc, c);
-
         // 9. Xử lý các block LockCount
         HandleLockBlocks(block);
-     /*   UIManager.Ins.GetUI<GameplayUI>().CollectAllIcons(
-     UIManager.Ins.GetUI<GameplayUI>().BarTransform,
-     () =>
-     {
-         
-     }
-     );*/
-
-       
     }
     private List<Transform> GetChildrenToRemove(BlockControl block, int score)
     {
@@ -230,7 +231,6 @@ public class Animation : Singleton<Animation>
             {
                 effect.transform.localPosition = children[i].localPosition;
                 yield return children[i].DOScale(Vector3.zero, 0.06f).WaitForCompletion();
-               
                // UIManager.Ins.GetUI<GameplayUI>().SpawnIConBlock(block.PosionBlock, color);
                 LeanPool.Despawn(children[i]);
                 block.ListChildBlock[block.ListChildBlock.Count - 1 - i].SetDefaultBlockChild();
@@ -244,6 +244,7 @@ public class Animation : Singleton<Animation>
         {
             effect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             Destroy(effect.gameObject);
+
         }
     }
 
@@ -254,18 +255,16 @@ public class Animation : Singleton<Animation>
         AddCheck(block.PosionBlock);
     }
 
-    private void HandleContinue(BlockControl block, BlockControl bc, bool c)
+    private void HandleContinue( BlockControl bc)
     {
-        if (c)
-        {
             Data.animationControl.ScorePlus = false;
-            if (bc != null && bc.State == StateBlock.Support)
+            BlockControl bcc = GetSupportBlock(bc);
+            if (bcc != null && bcc.State == StateBlock.Support)
             {
                 Data.animationControl.IsRun = true;
                 Data.animationControl.Ani = null;
-                Stretch(bc);
+                Stretch(bcc);
             }
-        }
     }
 
     private void HandleLockBlocks(BlockControl block)
@@ -277,13 +276,14 @@ public class Animation : Singleton<Animation>
                 HandleBlockBlockTarget(i);
             }
         }
+       
     }
     public void HandleBlockBlockTarget(BlockControl BlockLock)
     {
         GameManager.Ins.CurrenGridLevel.SpawnEffect(BlockLock);
         BlockLock.DeleteLockCount();
         GamePlayManager.Ins.ShakeObject(BlockLock.transform);
-        if (BlockLock.CheckCount() == 1)
+        if (BlockLock.CheckCount() == 0)
         {
             GamePlayManager.Ins.ShakeObject(BlockLock.transform);
             BlockLock.BackNomal();
@@ -292,35 +292,44 @@ public class Animation : Singleton<Animation>
         }
     }
     // Hàm nén
-    public Tween Squash(BlockControl targetTransform , float time)
+    public Tween Squash(BlockControl targetTransform, float time)
     {
         Vector3 originalScale = targetTransform.transform.localScale;
 
-        // Scale nén xuống (chỉ bé trục Y, phình trục X/Z cho cảm giác mềm mại)
         Vector3 squashScale = new Vector3(
             originalScale.x * 1.2f,
             originalScale.y * 0.5f,
             originalScale.z * 1.2f
         );
 
-        return targetTransform.transform
+        DG.Tweening.Sequence seq = DOTween.Sequence();
+
+        seq.Append(targetTransform.transform
             .DOScale(squashScale, time)
-            .SetEase(Ease.InQuad);
+            .SetEase(Ease.InQuad));
+
+        seq.Append(targetTransform.transform
+            .DOScale(originalScale, time)
+            .SetEase(Ease.OutQuad));
+        return seq;
     }
+
 
     // Hàm bật ra
     public Tween Stretch(BlockControl targetTransform)
     {
+        targetTransform.transform.DOKill();
         return targetTransform.transform
             .DOScale(SalceCahe, 0.2f)
             .SetEase(Ease.OutBounce)
             .OnComplete(() =>
             {
-                // Chạy event sau khi bật ra
                 BlockControl Bc = ChooseRandomBlock();
+              
                 GamePlayManager.Ins.EventSupport(targetTransform, Bc);
-                BCT = null;
+                bc = null;
             });
+        
     }
 
     public void EffectBlockChildTransition(System.Action onComplete = null)
