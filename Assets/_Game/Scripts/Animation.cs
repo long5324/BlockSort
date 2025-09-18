@@ -12,7 +12,11 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UIElements;
+using static Lean.Pool.LeanGameObjectPool;
+using static Sirenix.OdinInspector.Editor.UnityPropertyEmitter;
+using static UnityEngine.GraphicsBuffer;
 public class Animation : Singleton<Animation>
 {
   
@@ -122,15 +126,19 @@ public class Animation : Singleton<Animation>
             }
 
             yield return new WaitForSeconds(TimeDownBlock);
-
-       
-        Vector3 BlockStart = Data.animationControl.Ani.BlockStart.PosionBlock;
-        Vector3 BlockEnd = Data.animationControl.Ani.BlockEnd.PosionBlock;
+        Vector3 BlockStart = new Vector3();
+        Vector3 BlockEnd = new Vector3();
+        if (Data.animationControl.Ani.BlockStart != null)
+        {
+             BlockStart = Data.animationControl.Ani.BlockStart.PosionBlock;
+             BlockEnd = Data.animationControl.Ani.BlockEnd.PosionBlock;
+        }
         Data.animationControl.IsRun = false;
         Data.animationControl.ChangeInDataBlockControl(BlockStart);
         Data.animationControl.ChangeInDataBlockControl(BlockEnd);
         AddCheck(BlockStart);
         AddCheck(BlockEnd);
+        GameManager.Ins.EventEndGame();
     }
 
     void AddCheck (Vector3 BlockList)
@@ -145,47 +153,53 @@ public class Animation : Singleton<Animation>
     }
     Vector3 SalceCahe;
     BlockControl bc = null;
-    BlockControl maxBc = null;
-    int Maxscore;
+    private int MaxScoreSeen = int.MinValue;
+    private BlockControl maxBlock;
+    private bool handled = false;
+
     public IEnumerator PlusScore(BlockControl block, int score, float delay, bool c)
     {
-        
         yield return new WaitForSeconds(delay);
 
-
-            Maxscore = score;
-            maxBc = block;
-        if (score > Maxscore) { 
-             score = Maxscore;
-             maxBc = block;
+        // Cập nhật score lớn nhất (chỉ lưu, không reset ngay)
+        if (score > MaxScoreSeen)
+        {
+            MaxScoreSeen = score;
+            maxBlock = block;
         }
 
-         // 1. Lấy danh sách child sẽ xoá
-         var children = GetChildrenToRemove(block, score);
-        // 3. Spawn effect
+        // 1. Lấy danh sách child sẽ xoá
+        var children = GetChildrenToRemove(block, score);
+        // 2. Spawn effect
         ParticleSystem effect = SpawnEatEffect(block, score);
 
-        // 4. Nếu có block Support thì squash
-        if (bc == null && GetSupportBlock(block) != null) {
+        // 3. Nếu có block Support thì squash
+        if (bc == null && GetSupportBlock(block) != null)
+        {
             bc = GetSupportBlock(block);
-            Squash(bc, 0.06f * children.Count);   
+            Squash(bc, 0.06f * children.Count);
         }
 
-        // 5. Xử lý xoá từng child + animation
+        // 4. Xử lý xoá từng child + animation
         yield return RemoveChildren(block, children, effect);
 
-        if(score == Maxscore)
+        // ✅ Chỉ khi nào PlusScore với score lớn nhất chạy xong thì mới gọi
+        if (!handled && score == MaxScoreSeen)
         {
-            HandleContinue(block);
+            handled = true;
+            HandleContinue(maxBlock);
         }
-        // 6. Xoá effect
+
+        // 5. Xoá effect
         DestroyEffect(effect);
-        // 7. Update score + data
+
+        // 6. Update score + data
         FinalizeScore(block, children);
-        // 8. Xử lý tiếp (cờ c = true)
-        // 9. Xử lý các block LockCount
+        // 7. Xử lý các block LockCount
         HandleLockBlocks(block);
+        GameManager.Ins.EventEndGame();
     }
+
     private List<Transform> GetChildrenToRemove(BlockControl block, int score)
     {
         List<Transform> children = new List<Transform>();
@@ -237,6 +251,8 @@ public class Animation : Singleton<Animation>
             }
         }
     }
+    
+
 
     private void DestroyEffect(ParticleSystem effect)
     {
@@ -257,6 +273,8 @@ public class Animation : Singleton<Animation>
 
     private void HandleContinue( BlockControl bc)
     {
+        Debug.Log("Run");
+            handled = false;
             Data.animationControl.ScorePlus = false;
             BlockControl bcc = GetSupportBlock(bc);
             if (bcc != null && bcc.State == StateBlock.Support)
@@ -295,43 +313,59 @@ public class Animation : Singleton<Animation>
     public Tween Squash(BlockControl targetTransform, float time)
     {
         Vector3 originalScale = targetTransform.transform.localScale;
-
         Vector3 squashScale = new Vector3(
             originalScale.x * 1.2f,
             originalScale.y * 0.5f,
             originalScale.z * 1.2f
         );
 
-        DG.Tweening.Sequence seq = DOTween.Sequence();
-
-        seq.Append(targetTransform.transform
+        return targetTransform.transform
             .DOScale(squashScale, time)
-            .SetEase(Ease.InQuad));
+            .SetEase(Ease.InQuad);
+    }
 
+    public Tween Stretch(BlockControl targetTransform)
+    {
+        targetTransform.transform.DOKill();
+
+        BlockControl Bc = ChooseRandomBlock();
+        GamePlayManager.Ins.EventSupport(targetTransform, Bc);
+        bc = null;
+
+        Vector3 targetScale = new Vector3(43f, 43f, 43f);
+        Vector3 stretchScale = targetScale * 1.2f; // phình ra 20% so với (43,43,43)
+
+        DG.Tweening.Sequence seq = DOTween.Sequence();
         seq.Append(targetTransform.transform
-            .DOScale(originalScale, time)
-            .SetEase(Ease.OutQuad));
+            .DOScale(stretchScale, 0.1f)
+            .SetEase(Ease.OutQuad)); // phình ra
+        seq.Append(targetTransform.transform
+            .DOScale(targetScale, 0.15f)
+            .SetEase(Ease.OutBounce)); // quay về (43,43,43)
+
         return seq;
     }
 
 
-    // Hàm bật ra
-    public Tween Stretch(BlockControl targetTransform)
-    {
-        targetTransform.transform.DOKill();
-        return targetTransform.transform
-            .DOScale(SalceCahe, 0.2f)
-            .SetEase(Ease.OutBounce)
-            .OnComplete(() =>
-            {
-                BlockControl Bc = ChooseRandomBlock();
-              
-                GamePlayManager.Ins.EventSupport(targetTransform, Bc);
-                bc = null;
-            });
-        
-    }
 
+    public void SetUpNewPositon()
+    {
+        foreach (var block in GamePlayManager.Ins.BottomBlock)
+        {
+            if (block.transform.childCount == 0) continue;
+            List<Vector3> oldPositions = new List<Vector3>();
+            List<Transform> children = new List<Transform>();
+
+            foreach (Transform child in block.transform)
+            {
+                oldPositions.Add(child.localPosition);
+                children.Add(child);
+
+                child.localPosition = new Vector3(0, 0.1f, 0);
+                child.gameObject.SetActive(true);
+            }
+        }
+    }
     public void EffectBlockChildTransition(System.Action onComplete = null)
     {
         int activeBlocks = 0; // Đếm số block có child
@@ -406,52 +440,83 @@ public class Animation : Singleton<Animation>
         int r = UnityEngine.Random.Range(0, listBlockRandom.Count);
         return listBlockRandom[r];
     }
-    public void SetupTransformLevelGrid(Action onComplete = null)
+    public void SetupTransformLevelGrid(System.Action onComplete = null)
     {
-        // Đặt tất cả xuống y = -10 trước
-        foreach (var i in GamePlayManager.Ins.BottomBlock)
+        Transform GameLevelTransForrm = GameManager.Ins.CurrenLevelGameObject.transform;
+        GameLevelTransForrm.localPosition = new Vector3(5, 0, -5);
+        GameLevelTransForrm.localScale = new Vector3(1.5f, 0.6f, 1.2f);
+
+        DG.Tweening.Sequence seq = DOTween.Sequence();
+
+        // 1. Move lên
+        seq.Append(GameLevelTransForrm.DOLocalMove(Vector3.zero , 0.7f).SetEase(Ease.OutBack));
+        // 2. Scale về (chạy sau khi move xong)
+        seq.Join(GameLevelTransForrm.DOScale(Vector3.one, 0.25f).SetEase(Ease.OutBack));
+
+        // 3. Callback khi xong toàn bộ
+        seq.OnComplete(() =>
         {
-            i.transform.position = new Vector3(i.transform.position.x, -30, i.transform.position.z);
-        }
-        // Tạo list index
-        List<int> IndexRandom = new List<int>();
-        for (int i = 0; i < GamePlayManager.Ins.BottomBlock.Count; i++)
-        {
-            IndexRandom.Add(i);
-        }
-        // Chạy coroutine để animate từng cái 1
-        StartCoroutine(PlayBlocks(IndexRandom, onComplete));
+            onComplete?.Invoke();
+        });
+    }
+    public void AnimationVictoryGameLevel()
+    {
+        Transform target = GameManager.Ins.LevelGame.transform.GetChild(0);
+
+        DG.Tweening.Sequence seq = DOTween.Sequence();
+        seq.Join(target.DORotate(new Vector3(0, 180f, 0), 3f, RotateMode.FastBeyond360).SetEase(Ease.Linear));
+        seq.Join(target.DOScale(Vector3.zero, 3f).SetEase(Ease.Linear));
+
     }
 
-    private IEnumerator PlayBlocks(List<int> IndexRandom, Action onComplete)
-    {
-        while (IndexRandom.Count > 0)
-        {
-            int randomValue = GetRandomFromList(IndexRandom);
-            IndexRandom.Remove(randomValue);
+    #region Move Random Child Block
+    /*  public void SetupTransformLevelGrid(Action onComplete = null)
+      {
+          // Đặt tất cả xuống y = -10 trước
+          foreach (var i in GamePlayManager.Ins.BottomBlock)
+          {
+              i.transform.position = new Vector3(i.transform.position.x, -30, i.transform.position.z);
+          }
+          // Tạo list index
+          List<int> IndexRandom = new List<int>();
+          for (int i = 0; i < GamePlayManager.Ins.BottomBlock.Count; i++)
+          {
+              IndexRandom.Add(i);
+          }
+          // Chạy coroutine để animate từng cái 1
+          StartCoroutine(PlayBlocks(IndexRandom, onComplete));
+      }
 
-            Transform block = GamePlayManager.Ins.BottomBlock[randomValue].transform;
-            float targetY = GamePlayManager.Ins.BottomBlock[randomValue].PosionBlock.y;
-            foreach(Transform i in block)
-            {
-                i.gameObject.SetActive(false);
-            }
-            // Tween block này
-            block.DOMoveY(targetY, 0.5f).SetEase(Ease.OutBack);
+      private IEnumerator PlayBlocks(List<int> IndexRandom, Action onComplete)
+      {
+          while (IndexRandom.Count > 0)
+          {
+              int randomValue = GetRandomFromList(IndexRandom);
+              IndexRandom.Remove(randomValue);
 
-            yield return new WaitForSeconds(0.05f);
-        }
+              Transform block = GamePlayManager.Ins.BottomBlock[randomValue].transform;
+              float targetY = GamePlayManager.Ins.BottomBlock[randomValue].PosionBlock.y;
+              foreach(Transform i in block)
+              {
+                  i.gameObject.SetActive(false);
+              }
+              // Tween block này
+              block.DOMoveY(targetY, 0.5f).SetEase(Ease.OutBack);
 
-        // Khi chạy xong toàn bộ thì gọi hàm onComplete
-        onComplete?.Invoke();
-    }
+              yield return new WaitForSeconds(0.05f);
+          }
 
-    int GetRandomFromList(List<int> list)
-    {
-        if (list == null || list.Count == 0) return -1;
-        int randIndex = UnityEngine.Random.Range(0, list.Count);
-        return list[randIndex];
-    }
+          // Khi chạy xong toàn bộ thì gọi hàm onComplete
+          onComplete?.Invoke();
+      }
+
+      int GetRandomFromList(List<int> list)
+      {
+          if (list == null || list.Count == 0) return -1;
+          int randIndex = UnityEngine.Random.Range(0, list.Count);
+          return list[randIndex];
+      }*/
+    #endregion
 }
 
 

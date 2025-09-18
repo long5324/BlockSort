@@ -33,21 +33,21 @@ public class SettingUi : UICanvas
     void Replay()
     {
         Close(0f);
+        UIManager.Ins.GetUI<GameplayUI>().Open();
         GameManager.Ins.Replay();
        
     }
     void NextLevel()
     {
         Close(0f);
+        UIManager.Ins.GetUI<GameplayUI>().Open();
         GameManager.Ins.NextLevel();
        
     }
     void GoBackHome()
     {
-        Close(0f);
+        Close(1f);
         GameManager.Ins.BackToHome();
-       
-        UIManager.Ins.GetUI<HomeUI>().Open();
         GamePlayManager.Ins.SetPause(false);
     }
     private DOTweenAnimation tweenAnim;

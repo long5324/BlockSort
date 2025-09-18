@@ -37,6 +37,7 @@ public class HomeUI : UICanvas
     public override void Open()
     {
         base.Open();
+        playBtn.enabled = true;
         UpdateCoin();
     }
 
@@ -47,7 +48,8 @@ public class HomeUI : UICanvas
     }
     void StartGame()
     {
-        Close(0f);
+        Close(1f);
+        playBtn.enabled = false;
         GameManager.Ins.SetUpLevel(currentIndex + 1);
     }
   

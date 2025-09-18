@@ -137,7 +137,10 @@ public class GamePlayManager : Singleton<GamePlayManager>
     }
     public void SetPause(bool p)
     {
-        
+        if (GameManager.Ins.RotateLevel != null)
+        {
+            GameManager.Ins.RotateLevel.enabled = !p;    
+        }
         pause = p;
     }
     public void setColliderSize()
@@ -433,7 +436,8 @@ public class GamePlayManager : Singleton<GamePlayManager>
         EffectSetBlock.gameObject.SetActive(true);
         EffectSetBlock.gameObject.transform.SetParent(GameManager.Ins.CurrenGridLevel.transform);
         EffectSetBlock.gameObject.transform.localPosition = TargetBlock.transform.localPosition + new Vector3(0, 0.1f, 0);
-
+        EffectSetBlock.Clear();
+        EffectSetBlock.Play();
         if (Data.animationControl.ScorePlus || Data.animationControl.IsRun)
         {
             DelayCheck.Add(TargetBlock.PosionBlock);
@@ -443,7 +447,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         }
         selectedBlock.ListChildBlock.Clear();
         CheckGamePlay();
-       
+        GameManager.Ins.EventEndGame();
     }
     public void UpdateSocre(int NumberSocre)
     {
@@ -584,14 +588,14 @@ public class GamePlayManager : Singleton<GamePlayManager>
     }
     public void EvenTransPosBoosters(bool Start)
     {
-        Transform CameraTransform = GameManager.Ins.CurrenLevel.transform;
+        Transform CameraTransform = GameManager.Ins.CurrenLevelGameObject.transform;
         GameplayUI gameplayUI = UIManager.Ins.GetUI<GameplayUI>();
         Transform TranformGamePlay = GameManager.Ins.CurrenGamePlay.transform;
         if (Start)
         {
             GameManager.Ins.CurrenGridLevel.rotate.enabled = false;
             SetPause(true);
-            GameManager.Ins.CurrenLevel.transform.DORotate(new Vector3(-16, 0, 16), 1f);
+            GameManager.Ins.CurrenLevelGameObject.transform.DORotate(new Vector3(-16, 0, 16), 1f);
             GameManager.Ins.PanelGamePlay.transform.DORotate(new Vector3(-16, 0, 16), 1f);
             foreach (RectTransform t in gameplayUI.TranformButtonBoosters)
             {
@@ -608,7 +612,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         }
         else
         {
-            GameManager.Ins.CurrenLevel.transform.DORotate(new Vector3(0, 0, 0), 1f);
+            GameManager.Ins.CurrenLevelGameObject.transform.DORotate(new Vector3(0, 0, 0), 1f);
             GameManager.Ins.PanelGamePlay.transform.DORotate(new Vector3(0, 0, 0), 1f);
             gameplayUI.PanelIntroduceBoosters.DOAnchorPos3DX(-1500, 0.5f).OnComplete(() =>
             {

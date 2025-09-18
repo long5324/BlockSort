@@ -21,7 +21,6 @@ public class LoseUI : UICanvas
     {
         GameManager.Ins.Replay();
         Close(0f);
-        UIManager.Ins.GetUI<GameplayUI>().Open();
         GamePlayManager.Ins.SetPause(false);
     }
     public override void Open()

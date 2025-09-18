@@ -204,7 +204,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.3962264, g: 0.21493414, b: 0.21493414, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -1179,7 +1179,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.735849, g: 0.62824845, b: 0.62824845, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -2684,8 +2684,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 2222/51552
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: e13024a101bcafc429a51cc8646a27b9, type: 2}
-  m_sharedMaterial: {fileID: 5986125631954666529, guid: e13024a101bcafc429a51cc8646a27b9, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 50c12c23294124aa48490c44ac65a9e4, type: 2}
+  m_sharedMaterial: {fileID: 7746803525459343344, guid: 50c12c23294124aa48490c44ac65a9e4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2709,7 +2709,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 67.15
+  m_fontSize: 73.95
   m_fontSizeBase: 50
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -3188,6 +3188,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 3570914632598770332}
     m_Modifications:
+    - target: {fileID: 4695534318314106425, guid: 26183ec9be711494c8f9006288a44a1c, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4695534318552784416, guid: 26183ec9be711494c8f9006288a44a1c, type: 3}
       propertyPath: m_text
       value: Breaker Booster
@@ -3216,9 +3220,17 @@ PrefabInstance:
       propertyPath: m_HorizontalAlignment
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 4695534318597935072, guid: 26183ec9be711494c8f9006288a44a1c, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4695534318597935087, guid: 26183ec9be711494c8f9006288a44a1c, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -166.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 4695534318742345279, guid: 26183ec9be711494c8f9006288a44a1c, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4695534319737682411, guid: 26183ec9be711494c8f9006288a44a1c, type: 3}
       propertyPath: m_Name
@@ -3306,6 +3318,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4695534319737682412, guid: 26183ec9be711494c8f9006288a44a1c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4695534319737682413, guid: 26183ec9be711494c8f9006288a44a1c, type: 3}
+      propertyPath: m_RaycastTarget
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -3435,6 +3451,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Tutorial
       objectReference: {fileID: 0}
+    - target: {fileID: 6133174755787725776, guid: ac0546bde71e0944abe5e217fe433ef7, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3465,6 +3485,10 @@ PrefabInstance:
       propertyPath: m_Color.r
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4695534318314106425, guid: 26183ec9be711494c8f9006288a44a1c, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4695534318552784416, guid: 26183ec9be711494c8f9006288a44a1c, type: 3}
       propertyPath: m_textAlignment
       value: 65535
@@ -3484,6 +3508,10 @@ PrefabInstance:
     - target: {fileID: 4695534318552784431, guid: 26183ec9be711494c8f9006288a44a1c, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -45.054
+      objectReference: {fileID: 0}
+    - target: {fileID: 4695534318597935072, guid: 26183ec9be711494c8f9006288a44a1c, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4695534318597935087, guid: 26183ec9be711494c8f9006288a44a1c, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -3592,6 +3620,10 @@ PrefabInstance:
     - target: {fileID: 4695534319737682413, guid: 26183ec9be711494c8f9006288a44a1c, type: 3}
       propertyPath: m_Color.r
       value: 0.8301887
+      objectReference: {fileID: 0}
+    - target: {fileID: 4695534319737682413, guid: 26183ec9be711494c8f9006288a44a1c, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:

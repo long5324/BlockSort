@@ -80,7 +80,7 @@ namespace HumanSort
             tutorialBtn.AddListener(() => btnAction.Invoke());
         }
 
-        public void Message(string content)
+        public void Message(string content )
         {
             tutorialText.gameObject.SetActive(true);
             tutorialText.text = content;

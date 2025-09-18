@@ -37,11 +37,6 @@ public class AnimationControl : Singleton<AnimationControl>
         {
             IsRun = false;
         }*/
-
-        if (Data.gamePlayManager.DelayCheck.Count==0 && Ani.BlockStart == null && !IsRun && !ScorePlus && Data.gameManager.CheckEndGame())
-        {
-            Data.gameManager.EventEndGame();
-        }
         if (ScorePlus)
         {
             delaysort = true;
@@ -60,10 +55,8 @@ public class AnimationControl : Singleton<AnimationControl>
         }
         else if (!IsRun && !ScorePlus && DeLayCheckScore == null && Ani.BlockStart == null)
         {
-            DeLayCheckScore= StartCoroutine(DelayCheckSocre());
-            
+            DeLayCheckScore= StartCoroutine(DelayCheckSocre()); 
         }
-
     }
     public void ResetStateAnimationControl()
     {

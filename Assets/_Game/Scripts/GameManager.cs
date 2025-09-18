@@ -5,6 +5,7 @@ using Lean.Pool;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem.HID;
@@ -12,89 +13,93 @@ using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UIElements;
 using static UnityEngine.GraphicsBuffer;
 
-[System.Serializable]
-public class InfogameLevel
-{
-    public int NumberLever;
-    public GameObject GameObjectLevel;
-    public int ScoreMax;
-    public LevelReward LevelRewards;
-}
+
 public class GameManager : Singleton<GameManager>
 {
-    public int MaxCurrenScore; 
-    public List<InfogameLevel> ListGameLever;
-    public int CurrenNumberLevel { get; set; } = 1;
-    public GameObject CurrenLevel;
-    public GameObject LevelGame;
+    [Header("Data Import")]
+    public GameLevelData GameLevelDataBase;
     public Block BlockData;
-    public  GameObject GamePlay;
-    private DataInport Data;
-    public GameObject CurrenGamePlay;
+    public GameObject LevelGame;
+    public GameObject GamePlayPrefab;
+    [Header("Other")]
     public GameObject PanelGamePlay;
-    public InfogameLevel CurrenLevelData;
-    public InitGrid CurrenGridLevel { get; set; }
     public RectTransform MainCanvasRect;
+    public Animator AnimationTransition;
+    public TextMeshProUGUI TextLevelTransition;
+    public GameObject CurrenGamePlay { get; private set; }
+    public InfoGameLevel CurrenLevelData { get; private set; }
+    public GameObject CurrenLevelGameObject { get; private set; }
+    public InitGrid CurrenGridLevel { get; private set; }
+    public int MaxCurrenScore { get; private set; }
+    public DragRotate RotateLevel { get; private set; }
+    public int CurrenNumberLevel { get; private set; } = 1;
 
     private void Start()
     {
-        Data = DataInport.Ins;
-        MaxCurrenScore = ListGameLever[0].ScoreMax;
+        MaxCurrenScore = GameLevelDataBase.ListGameLevel[0].ScoreMax;
         UIManager.Ins.OpenUI<HomeUI>();
     }
     IEnumerator WaitSpawn()
     {
         yield return new WaitForSeconds(1);
-        Data.gamePlayManager.RandomSpawnBlockChild();
-        Data.gamePlayManager.setColliderSize();
+        GamePlayManager.Ins.RandomSpawnBlockChild();
+        GamePlayManager.Ins.setColliderSize();
     }
     public void SetUpLevel(int Number )
     {
+        AnimationTransition.SetTrigger("Close");
+        TextLevelTransition.text = "Level " + Number.ToString();
+       StartCoroutine(StartInit(Number));
+    }
+    public IEnumerator  StartInit(int Number)
+    {
+        yield return new WaitForSeconds(1);
+        UIManager.Ins.GetUI<GameplayUI>().Close(0f);
+        //pause Game And Kill Animation
         GamePlayManager.Ins.SetPause(true);
         StopAllAnimations();
-        if(LevelGame.transform.childCount > 0)
+        AnimationControl.Ins.ResetStateAnimationControl();
+        //Delete Last Level 
+        if (LevelGame.transform.childCount > 0)
         {
             foreach (Transform child in LevelGame.transform)
             {
                 Destroy(child.gameObject);
             }
         }
-        AnimationControl.Ins.ResetStateAnimationControl();
-        foreach (var i in ListGameLever)
+        //Init new Level Gameobject 
+        foreach (var i in GameLevelDataBase.ListGameLevel)
         {
-            if(i.NumberLever == Number)
+            if (i.NumberLever == Number)
             {
                 CurrenNumberLevel = Number;
-                CurrenLevel = Instantiate(i.GameObjectLevel, Vector3.zero, Quaternion.identity);
-                CurrenGamePlay = Instantiate(GamePlay, Vector3.zero, Quaternion.identity);
-                CurrenLevel.transform.SetParent(LevelGame.transform, false);
+                CurrenLevelGameObject = Instantiate(i.GameObjectLevel, Vector3.zero, Quaternion.identity);
+                CurrenGamePlay = Instantiate(GamePlayPrefab, Vector3.zero, Quaternion.identity);
+                CurrenLevelGameObject.transform.SetParent(LevelGame.transform, false);
                 CurrenGamePlay.transform.SetParent(LevelGame.transform, false);
-                List<GameObject> ListBlockGamePlay= new List<GameObject>();
+                List<GameObject> ListBlockGamePlay = new List<GameObject>();
                 List<Vector3> DefaulP = new List<Vector3>();
                 foreach (Transform j in CurrenGamePlay.transform)
                 {
                     ListBlockGamePlay.Add(j.gameObject);
                     DefaulP.Add(j.position);
                 }
-                Data.gamePlayManager.ListDefaulPossitionBlockGamePlay = DefaulP;
-                Data.gamePlayManager.BottomBlock = CurrenLevel.GetComponent<InitGrid>().ListblockGround;
-                Data.gamePlayManager.ListBlockGamePlay = ListBlockGamePlay;
-                Data.gamePlayManager.RandomSpawnBlockChild();
+                GamePlayManager.Ins.ListDefaulPossitionBlockGamePlay = DefaulP;
+                GamePlayManager.Ins.BottomBlock = CurrenLevelGameObject.GetComponent<InitGrid>().ListblockGround;
+                GamePlayManager.Ins.ListBlockGamePlay = ListBlockGamePlay;
+                GamePlayManager.Ins.RandomSpawnBlockChild();
                 break;
             }
         }
         UpdateScore();
         GamePlayManager.Ins.UpdateListBlockLock();
-        CurrenGridLevel = CurrenLevel.GetComponent<InitGrid>();
-        Animation.Ins.SetupTransformLevelGrid(() =>
-        {
-           
-            StartCoroutine(WaitEffectBlockChild());
-        });
+        CurrenGridLevel = CurrenLevelGameObject.GetComponent<InitGrid>();
+        RotateLevel = CurrenLevelGameObject.GetComponent<DragRotate>();
+        Number = 0;
+        StartCoroutine(WaitEffectBlockChild());
     }
     public void OpenUiGamePlay()
     {
-        
         string NumberLevelName = "Level " + CurrenNumberLevel.ToString();
         UIManager.Ins.GetUI<GameplayUI>().SetupLevel(NumberLevelName, MaxCurrenScore.ToString());
         UIManager.Ins.GetUI<GameplayUI>().Open();
@@ -103,20 +108,27 @@ public class GameManager : Singleton<GameManager>
     }
     private IEnumerator WaitEffectBlockChild()
     {
-            yield return new WaitForSeconds(0.3f);
-        Animation.Ins.EffectBlockChildTransition(() =>
+        yield return new WaitForSeconds(1.5f);
+        OpenUiGamePlay();
+        /*Animation.Ins.EffectBlockChildTransition(() =>
         {
-            
+
             OpenUiGamePlay();
-        });
+        });*/
     }
     public void BackToHome()
     {
-        foreach (Transform child in LevelGame.transform)
-        {
-            Destroy(child.gameObject);
-        }
-        CurrenLevel = new GameObject();
+        AnimationTransition.SetTrigger("Close");
+        TextLevelTransition.text = "Back Home";
+        CurrenLevelGameObject = new GameObject();
+        StartCoroutine(DelayOpenHomeUI());
+      
+    }
+    private IEnumerator DelayOpenHomeUI()
+    {
+        yield return new WaitForSeconds(1f);
+        UIManager.Ins.GetUI<HomeUI>().Open();
+        DeleteLevel();
     }
     public void DeleteLevel()
     {
@@ -127,9 +139,9 @@ public class GameManager : Singleton<GameManager>
     }
     void UpdateScore()
     {
-        Data.gamePlayManager.CurrenScore = 0;
+        GamePlayManager.Ins.CurrenScore = 0;
         UIManager.Ins.GetUI<GameplayUI>().SetScore(0, 10);
-        foreach (var i in ListGameLever)
+        foreach (var i in GameLevelDataBase.ListGameLevel)
         {
             if (i.NumberLever == CurrenNumberLevel)
             {
@@ -137,12 +149,12 @@ public class GameManager : Singleton<GameManager>
                 break;
             }
         }
-        UIManager.Ins.GetUI<GameplayUI>().SetScore(Data.gamePlayManager.CurrenScore, MaxCurrenScore);
+        UIManager.Ins.GetUI<GameplayUI>().SetScore(GamePlayManager.Ins.CurrenScore, MaxCurrenScore);
     }
     public void StopAllAnimations()
     {
         StopAllCoroutines();
-        Data.animationControl.IsRun = false;
+        AnimationControl.Ins.IsRun = false;
     }
 
     public void Replay()
@@ -150,16 +162,14 @@ public class GameManager : Singleton<GameManager>
         SetUpLevel(CurrenNumberLevel );
        
     }
-
+    
     public void Reroll()
     {
         // Lấy ObjectGamePlay
         GameObject ObjectGamePlay = LevelGame.transform.GetChild(1).gameObject;
         GamePlayManager.Ins.SetPause(true);
-        // 1️⃣ Dịch xuống y = -5
         ObjectGamePlay.transform.DOMoveY(-5f, 0.3f).OnComplete(() =>
         {
-            // 2️⃣ Xử lý xóa child và clear data
             foreach (Transform i in ObjectGamePlay.transform)
             {
                 ObjectSet OBS = i.GetComponent<ObjectSet>();
@@ -176,13 +186,9 @@ public class GameManager : Singleton<GameManager>
                     LeanPool.Despawn(child);
                 }
             }
-
-            // 3️⃣ Spawn block mới
             GamePlayManager.Ins.RandomSpawnBlockChild();
-
-            // 4️⃣ Dịch ObjectGamePlay về y = 0
             ObjectGamePlay.transform.DOMoveY(0f, 0.3f).SetEase(Ease.OutBack).OnComplete(() => {
-                GamePlayManager.Ins.SetPause(false);
+            GamePlayManager.Ins.SetPause(false);
             });
         });
     }
@@ -226,22 +232,24 @@ public class GameManager : Singleton<GameManager>
     }
     public void StartLever(int NumberLever)
     {
-        foreach(var i in ListGameLever)
+        foreach(var i in GameLevelDataBase.ListGameLevel)
         {
             if (i.NumberLever == NumberLever) {
 
                 i.GameObjectLevel.transform.position = Vector3.zero;
-                CurrenLevel.transform.position = CurrenLevel.transform.position + new Vector3(0,-30,0);
+                CurrenLevelGameObject.transform.position = CurrenLevelGameObject.transform.position + new Vector3(0,-30,0);
             }
             break;
         }
     }
     public bool CheckEndGame()
     {
-        if(Data.gamePlayManager.BottomBlock == null) return false;
-        foreach (var i in Data.gamePlayManager.BottomBlock)
+        Debug.Log("Check End");
+        List<BlockControl> ListBlockControl = GamePlayManager.Ins.BottomBlock;
+        if (ListBlockControl == null) return false;
+        foreach (var i in ListBlockControl)
         {
-             if(i.ListChildBlock.Count == 0)
+             if(i.ListChildBlock.Count == 0 && i.State == StateBlock.Nomal)
             {
                 return false;
             }
@@ -253,16 +261,27 @@ public class GameManager : Singleton<GameManager>
     {
         if (!CheckEndGame()) return;
         UIManager.Ins.GetUI<LoseUI>().Open();
-        UIManager.Ins.GetUI<GameplayUI>().Close(0f);
+        UIManager.Ins.GetUI<GameplayUI>().Close(2f);
         DestroyLever();
     }
     public void Winlevel()
     {
-        UIManager.Ins.GetUI<GameplayUI>().Close(0f);
-        Data.gamePlayManager.SetPause(true);
+        UIManager.Ins.GetUI<GameplayUI>().Close(2f);
+        GamePlayManager.Ins.SetPause(true);
+        if (LevelGame.transform.childCount == 2)
+        {
+            Destroy(LevelGame.transform.GetChild(1).gameObject);
+        }
+        StartCoroutine(WaitEffect());
         StartCoroutine(ShowVictoryUI());
     }
+    private IEnumerator WaitEffect()
+    {
+        yield return new WaitForSeconds(1f); // đợi 1s
 
+        Animation.Ins.AnimationVictoryGameLevel();
+
+    }
     private IEnumerator ShowVictoryUI()
     {
         yield return new WaitForSeconds(1f); // đợi 1s
@@ -273,15 +292,8 @@ public class GameManager : Singleton<GameManager>
 
     public void NextLevel()
     {
-        if (CurrenNumberLevel + 1 > ListGameLever.Count) return;
-        StopAllAnimations();
-       
-        foreach (Transform child in LevelGame.transform)
-        {
-            Destroy(child.gameObject);
-        }
+        if (CurrenNumberLevel + 1 > GameLevelDataBase.ListGameLevel.Count) return;
         SetUpLevel(CurrenNumberLevel + 1);
-        UpdateScore();
     }
 
 }

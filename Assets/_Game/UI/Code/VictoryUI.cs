@@ -41,7 +41,7 @@ public class VictoryUI : UICanvas
     }
     public void SetNumberReward()
     {
-        NumberCoin.text = GameManager.Ins.ListGameLever[GameManager.Ins.CurrenNumberLevel - 1].LevelRewards.NumberItem.ToString();
+        NumberCoin.text = GameManager.Ins.GameLevelDataBase.ListGameLevel[GameManager.Ins.CurrenNumberLevel - 1].LevelRewards.NumberItem.ToString();
     }
     public void PlayEffect()
     {
@@ -63,7 +63,7 @@ public class VictoryUI : UICanvas
     public void EffectPlusCoin()
     {
         int lastcoin = Currency.Ins.DataCurrency.coin;
-        Currency.Ins.AddCoin(GameManager.Ins.ListGameLever[GameManager.Ins.CurrenNumberLevel - 1].LevelRewards.NumberItem);
+        Currency.Ins.AddCoin(GameManager.Ins.GameLevelDataBase.ListGameLevel[GameManager.Ins.CurrenNumberLevel - 1].LevelRewards.NumberItem);
         int CurrenCoin = Currency.Ins.DataCurrency.coin;
         AnimateMoney(lastcoin, CurrenCoin);
     }

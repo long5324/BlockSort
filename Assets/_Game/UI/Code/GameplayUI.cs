@@ -131,6 +131,7 @@ public class GameplayUI : UICanvas
         new Vector3(0, 0, 0),
         1.3f                   // thời gian di chuyển tay
         );
+        Tutorial.Ins.Message("Click Herre");
         GamePlayManager.Ins.TutorialActive = true;
     }
     public void OpenCoinData()
@@ -336,6 +337,14 @@ public class GameplayUI : UICanvas
         SetCoinEffect(300);
         GameManager.Ins.Reroll();
         UpdateColorPriceBooters();
+        ReRollButton.enabled = false;
+        StartCoroutine(DelayRoolButton());
+    }
+
+    IEnumerator DelayRoolButton()
+    {
+        yield return new WaitForSeconds(0.5f);
+        ReRollButton.enabled = true;
     }
     public void EventEndBooster()
     {
