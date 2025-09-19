@@ -23,9 +23,7 @@ public class InitGrid : MonoBehaviour
     [SerializeField] GameObject ObjectPrefabLock;
     [SerializeField] GameObject ObjectPrefabLockCount;
     [SerializeField] GameObject ObjectPrefabUpport;
-    public ParticleSystem EffectSelectBlock;
-    public ParticleSystem ParticleEffectSetBlock;
-    public ParticleSystem ParticleEffectHammer;
+
     public List<BlockControl> ListblockGround = new List<BlockControl>();
     public DragRotate rotate;
     private List<Vector3> CenterGird = new List<Vector3>();
@@ -96,8 +94,8 @@ public class InitGrid : MonoBehaviour
             SetupBlock();
             FitCollider();
   }
-    
-    public void FitCollider()
+
+    public void FitCollider(float scale = 1.3f)
     {
         // Lấy hoặc thêm BoxCollider cho parent
         BoxCollider box = GetComponent<BoxCollider>();
@@ -115,8 +113,9 @@ public class InitGrid : MonoBehaviour
 
         // Gán size và center cho BoxCollider cha
         box.center = transform.InverseTransformPoint(bounds.center);
-        box.size = bounds.size;
+        box.size = bounds.size * scale; // tăng size theo hệ số
     }
+
     public void SetupBlock()
     {
         ListblockGround.Clear();

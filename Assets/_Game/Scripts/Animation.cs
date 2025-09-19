@@ -157,48 +157,47 @@ public class Animation : Singleton<Animation>
     private BlockControl maxBlock;
     private bool handled = false;
 
+    private int totalCalls = 0;
+
     public IEnumerator PlusScore(BlockControl block, int score, float delay, bool c)
     {
-        yield return new WaitForSeconds(delay);
+        totalCalls++;
 
-        // Cập nhật score lớn nhất (chỉ lưu, không reset ngay)
         if (score > MaxScoreSeen)
         {
             MaxScoreSeen = score;
             maxBlock = block;
         }
 
-        // 1. Lấy danh sách child sẽ xoá
+        yield return new WaitForSeconds(delay);
+
         var children = GetChildrenToRemove(block, score);
-        // 2. Spawn effect
         ParticleSystem effect = SpawnEatEffect(block, score);
 
-        // 3. Nếu có block Support thì squash
         if (bc == null && GetSupportBlock(block) != null)
         {
             bc = GetSupportBlock(block);
             Squash(bc, 0.06f * children.Count);
         }
 
-        // 4. Xử lý xoá từng child + animation
         yield return RemoveChildren(block, children, effect);
 
-        // ✅ Chỉ khi nào PlusScore với score lớn nhất chạy xong thì mới gọi
-        if (!handled && score == MaxScoreSeen)
+    
+
+        // ✅ Nếu nhiều lần gọi → chỉ chạy khi score cao nhất
+        // ✅ Nếu chỉ có 1 lần gọi → chạy luôn
+        if (!handled && ((totalCalls == 1) || (score == MaxScoreSeen)))
         {
             handled = true;
             HandleContinue(maxBlock);
         }
 
-        // 5. Xoá effect
         DestroyEffect(effect);
-
-        // 6. Update score + data
         FinalizeScore(block, children);
-        // 7. Xử lý các block LockCount
         HandleLockBlocks(block);
         GameManager.Ins.EventEndGame();
     }
+
 
     private List<Transform> GetChildrenToRemove(BlockControl block, int score)
     {
@@ -236,7 +235,7 @@ public class Animation : Singleton<Animation>
         return effect;
     }
 
-    private IEnumerator RemoveChildren(BlockControl block, List<Transform> children, ParticleSystem effect)
+    private IEnumerator RemoveChildren(BlockControl block, List<Transform> children,ParticleSystem effect)
     {
         Color color = block.ListChildBlock[block.ListChildBlock.Count - 1].MeshRenderer.material.color;
         for (int i = 0; i < children.Count; i++)
@@ -245,7 +244,6 @@ public class Animation : Singleton<Animation>
             {
                 effect.transform.localPosition = children[i].localPosition;
                 yield return children[i].DOScale(Vector3.zero, 0.06f).WaitForCompletion();
-               // UIManager.Ins.GetUI<GameplayUI>().SpawnIConBlock(block.PosionBlock, color);
                 LeanPool.Despawn(children[i]);
                 block.ListChildBlock[block.ListChildBlock.Count - 1 - i].SetDefaultBlockChild();
             }
@@ -273,8 +271,8 @@ public class Animation : Singleton<Animation>
 
     private void HandleContinue( BlockControl bc)
     {
-        Debug.Log("Run");
             handled = false;
+        MaxScoreSeen = 0;
             Data.animationControl.ScorePlus = false;
             BlockControl bcc = GetSupportBlock(bc);
             if (bcc != null && bcc.State == StateBlock.Support)
@@ -433,7 +431,7 @@ public class Animation : Singleton<Animation>
 
         if (listBlockRandom.Count == 0)
         {
-            Debug.LogWarning("Không tìm thấy block nào hợp lệ!");
+          
             return null;
         }
 

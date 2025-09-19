@@ -24,6 +24,12 @@ public class SettingUi : UICanvas
         HomeButton.onClick.AddListener(GoBackHome);
         GamePlayUI = UIManager.Ins.GetUI<GameplayUI>();
     }
+    IEnumerator DelayClick(Button btn)
+    {
+        btn.enabled = false;
+        yield return new WaitForSeconds(1f);
+        btn.enabled = true;
+    }
     void CloseSetting()
     {
         Close(0f);
@@ -32,6 +38,7 @@ public class SettingUi : UICanvas
     }
     void Replay()
     {
+        StartCoroutine(DelayClick(RePlayButton));
         Close(0f);
         UIManager.Ins.GetUI<GameplayUI>().Open();
         GameManager.Ins.Replay();
@@ -39,6 +46,7 @@ public class SettingUi : UICanvas
     }
     void NextLevel()
     {
+        StartCoroutine(DelayClick(NextLevelButton));
         Close(0f);
         UIManager.Ins.GetUI<GameplayUI>().Open();
         GameManager.Ins.NextLevel();
@@ -46,6 +54,7 @@ public class SettingUi : UICanvas
     }
     void GoBackHome()
     {
+        StartCoroutine(DelayClick(HomeButton));
         Close(1f);
         GameManager.Ins.BackToHome();
         GamePlayManager.Ins.SetPause(false);

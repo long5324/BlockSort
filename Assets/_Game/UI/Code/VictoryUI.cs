@@ -1,13 +1,15 @@
-﻿using DG.Tweening;
+﻿using AssetKits.ParticleImage;
+using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static Lean.Pool.LeanGameObjectPool;
 
 public class VictoryUI : UICanvas
 {
-    
+
     [SerializeField] Button RePlayButton;
     [SerializeField] Button NextLevelButton;
     [SerializeField] Button HomeButton;
@@ -17,12 +19,18 @@ public class VictoryUI : UICanvas
     [SerializeField] TextMeshProUGUI CurrenCoinText;
     [SerializeField] List<ParticleSystem> EffectVitory;
     [SerializeField] List<GameObject> GameObjectWin;
-    [SerializeField] GameObject CoinMoveEffect;
+    [SerializeField] ParticleImage CoinMoveEffect;
     private void Start()
     {
         RePlayButton.onClick.AddListener(Replay);
         NextLevelButton.onClick.AddListener(NextLevel);
         HomeButton.onClick.AddListener(GoBackHome);
+    }
+    IEnumerator DelayClick(Button btn)
+    {
+        btn.enabled = false;
+        yield return new WaitForSeconds(1f);
+        btn.enabled = true;
     }
     public override void Open()
     {
@@ -36,7 +44,7 @@ public class VictoryUI : UICanvas
     }
     public override void Close(float delayTime)
     {
-        
+
         base.Close(delayTime);
     }
     public void SetNumberReward()
@@ -45,7 +53,7 @@ public class VictoryUI : UICanvas
     }
     public void PlayEffect()
     {
-        if (EffectVitory != null && EffectVitory.Count >=5) {
+        if (EffectVitory != null && EffectVitory.Count >= 5) {
             StartCoroutine(WaitPlayParticle(0.3f, EffectVitory[0]));
             StartCoroutine(WaitPlayParticle(0.3f, EffectVitory[1]));
             StartCoroutine(WaitPlayParticle(1f, EffectVitory[2]));
@@ -58,7 +66,7 @@ public class VictoryUI : UICanvas
     {
         yield return new WaitForSeconds(Time);
         SetActiveEventButton(true);
-        CoinMoveEffect.SetActive(true);
+        CoinMoveEffect.Play();
     }
     public void EffectPlusCoin()
     {
@@ -69,8 +77,8 @@ public class VictoryUI : UICanvas
     }
     public void SetActiveEventButton(bool b)
     {
-        foreach (var item in GameObjectWin) { 
-          item.SetActive(b);
+        foreach (var item in GameObjectWin) {
+            item.SetActive(b);
         }
     }
     public IEnumerator WaitPlayParticle(float Time, ParticleSystem Effect)
@@ -87,21 +95,29 @@ public class VictoryUI : UICanvas
     }
     void Replay()
     {
+        StartCoroutine(DelayClick(RePlayButton));
         GameManager.Ins.Replay();
         Close(0f);
         //GamePlayManager.Ins.SetPause(false);    
     }
     void NextLevel()
     {
+        StartCoroutine(DelayClick(NextLevelButton));
         GameManager.Ins.NextLevel();
-        Close(0f);
-      //  GamePlayManager.Ins.SetPause(false);
+        Close(1f);
+        //  GamePlayManager.Ins.SetPause(false);
     }
+    public IEnumerator WaitOpenHomeUI(){
+        yield return new WaitForSeconds(1);
+         UIManager.Ins.GetUI<HomeUI>().Open();
+}
+
     void GoBackHome()
     {
+        StartCoroutine(DelayClick(HomeButton));
         GameManager.Ins.BackToHome();
-        Close(0f);
-        UIManager.Ins.GetUI<HomeUI>().Open();
+        Close(1f);
+       StartCoroutine(WaitOpenHomeUI());
        // GamePlayManager.Ins.SetPause(false);
     }
 }

@@ -26,6 +26,10 @@ public class GameManager : Singleton<GameManager>
     public RectTransform MainCanvasRect;
     public Animator AnimationTransition;
     public TextMeshProUGUI TextLevelTransition;
+    public ParticleSystem EffectSelectBlock;
+    public ParticleSystem ParticleEffectSetBlock;
+    public ParticleSystem ParticleEffectHammer;
+    public Animator HammerAnimator;
     public GameObject CurrenGamePlay { get; private set; }
     public InfoGameLevel CurrenLevelData { get; private set; }
     public GameObject CurrenLevelGameObject { get; private set; }
@@ -49,7 +53,7 @@ public class GameManager : Singleton<GameManager>
     {
         AnimationTransition.SetTrigger("Close");
         TextLevelTransition.text = "Level " + Number.ToString();
-       StartCoroutine(StartInit(Number));
+        StartCoroutine(StartInit(Number));
     }
     public IEnumerator  StartInit(int Number)
     {

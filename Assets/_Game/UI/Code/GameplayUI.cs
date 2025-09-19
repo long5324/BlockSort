@@ -36,6 +36,10 @@ public class GameplayUI : UICanvas
     [Header("Data Coin")]
     public RectTransform CoinDataRec;
     public TextMeshProUGUI CoinDataText;
+    [Header("Booters")]
+    public TextMeshProUGUI NumberDestroyBlock_Booters;
+    public TextMeshProUGUI NumberChangeBlock_Booters;
+    public TextMeshProUGUI NumberRool_Booters;
     bool BoxCoinDataOpen = false;
     private void Awake()
     {
@@ -44,7 +48,6 @@ public class GameplayUI : UICanvas
         DestroyBlock.onClick.AddListener(EventDestroyBlock);
         CannelBoosters.onClick.AddListener(EventEndBooster);
         ChangeBlockButton.onClick.AddListener(EventChangeBlock);
-       
         canvasRect = GetComponentInParent<Canvas>().GetComponent<RectTransform>();
     }
     public RectTransform canvasRect;      // Canvas chính  
@@ -156,7 +159,15 @@ public class GameplayUI : UICanvas
             vibrato: 10,
             randomness: 90f
         ).OnComplete(() => UIRect.anchoredPosition = originalPos);
-      
+    }
+    public void UpdateBooters()
+    {
+        int NumberDestroy = Currency.Ins.GetBooster(BootersName.DestroyBlock);
+        NumberDestroyBlock_Booters.text = NumberDestroy.ToString();
+        int NumberChange = Currency.Ins.GetBooster(BootersName.ChangeBlock);
+        NumberChangeBlock_Booters.text = NumberChange.ToString();
+        int NumberRool = Currency.Ins.GetBooster(BootersName.Rool);
+        NumberRool_Booters.text = NumberRool.ToString();
     }
     private void UpdateColorPriceBooters()
     {
@@ -284,6 +295,7 @@ public class GameplayUI : UICanvas
     {
         base.Open();
         UpdateColorPriceBooters();
+        UpdateBooters();
     }
     public void UnClickCButton()
     {
@@ -299,42 +311,75 @@ public class GameplayUI : UICanvas
     }
     public void EventDestroyBlock()
     {
-        if (!CheckCoin(500, PriceDestroyBooters)) {
+        if (!Currency.Ins.UseBooster(BootersName.DestroyBlock))
+        {
+            if (CheckCoin(500, PriceDestroyBooters))
+            {
+                UIManager.Ins.GetUI<ByBooters>().Open();
+                UIManager.Ins.GetUI<ByBooters>().coinBy = 500;
+                UIManager.Ins.GetUI<ByBooters>().ButtonWaintBy = BootersName.DestroyBlock;
+                GamePlayManager.Ins.SetPause(true);
+                
+            }
+            return;
+        }
+        UpdateBooters();
+       /* if (!CheckCoin(500, PriceDestroyBooters)) {
             ShakeUI(0f, DestroyBlock.GetComponent<RectTransform>());
             return; 
-        }
+        }*/
         string tile = "Breaker Booster";
         string main = "Choose the block you want to destroy";
         ChangeTextPanel(tile, main);
         GamePlayManager.Ins.SetUpBooster();
         GamePlayManager.Ins.StateBooter = Boosters.DestroyBlock;
-        SetCoinEffect(500);
         UpdateColorPriceBooters();
     }
     public void EventChangeBlock()
     {
-        if (!CheckCoin(500,PriceChangeBlockBooters))
+        if (!Currency.Ins.UseBooster(BootersName.ChangeBlock))
         {
-            ShakeUI(0f, ChangeBlockButton.GetComponent<RectTransform>());
+            if (CheckCoin(500, PriceDestroyBooters))
+            {
+                UIManager.Ins.GetUI<ByBooters>().Open();
+                UIManager.Ins.GetUI<ByBooters>().coinBy = 500;
+                UIManager.Ins.GetUI<ByBooters>().ButtonWaintBy = BootersName.ChangeBlock;
+                GamePlayManager.Ins.SetPause(true);
+            }
             return;
         }
+        UpdateBooters();
+        /*  if (!CheckCoin(500,PriceChangeBlockBooters))
+          {
+              ShakeUI(0f, ChangeBlockButton.GetComponent<RectTransform>());
+              return;
+          }*/
         string tile = "Change position";
         string main = "Hold to move a block you want.";
         ChangeTextPanel(tile, main);
         GamePlayManager.Ins.SetUpBooster();
         GamePlayManager.Ins.StateBooter = Boosters.ChangeBlock;
-        SetCoinEffect(500);
         UpdateColorPriceBooters();
     }
     public void ReRollButtonEvent()
     {
+        if (!Currency.Ins.UseBooster(BootersName.Rool)) {
+            if (CheckCoin(200, PriceDestroyBooters))
+            {
+                UIManager.Ins.GetUI<ByBooters>().Open();
+                UIManager.Ins.GetUI<ByBooters>().coinBy = 200;
+                UIManager.Ins.GetUI<ByBooters>().ButtonWaintBy = BootersName.Rool;
+                GamePlayManager.Ins.SetPause(true);
+            }
 
-        if (!CheckCoin(500, PriceRoolBooters))
-        {
-            ShakeUI(0f, ReRollButton.GetComponent<RectTransform>());
             return;
         }
-        SetCoinEffect(300);
+        UpdateBooters();
+        /* if (!CheckCoin(500, PriceRoolBooters))
+         {
+             ShakeUI(0f, ReRollButton.GetComponent<RectTransform>());
+             return;
+         }*/
         GameManager.Ins.Reroll();
         UpdateColorPriceBooters();
         ReRollButton.enabled = false;

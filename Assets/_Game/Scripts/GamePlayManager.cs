@@ -3,6 +3,7 @@ using DG.Tweening.Core.Easing;
 using HumanSort;
 using JetBrains.Annotations;
 using Lean.Pool;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using Unity.VisualScripting;
@@ -190,7 +191,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         {
             BlockControl TargetBlock  =  hit.collider.gameObject.GetComponent<BlockControl>();
             if (TargetBlock == null) return;
-            Debug.Log(TargetBlock.State);
+          
             if(TargetBlock.State == StateBlock.LockCount && StateBooter == Boosters.DestroyBlock)
             {
                 Animation.Ins.HandleBlockBlockTarget(TargetBlock);
@@ -202,7 +203,8 @@ public class GamePlayManager : Singleton<GamePlayManager>
             if (TargetBlock.transform.childCount == 0) return;
             if (StateBooter == Boosters.DestroyBlock)
             {
-                RunBoostersBreackBlock(TargetBlock);
+                WaitHammerAnimation(TargetBlock);
+                //RunBoostersBreackBlock(TargetBlock);
                 EndBoosters();
                 RunBoosters = false;
             }
@@ -275,7 +277,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
                     if (TargetBlock.State == StateBlock.Lock)
                         return;
                     TargetBlock.SetColor(LightMaterial);
-                    Transform PostionLightEfffect = Data.gameManager.CurrenGridLevel.EffectSelectBlock.transform;
+                    Transform PostionLightEfffect = Data.gameManager.EffectSelectBlock.transform;
                     PostionLightEfffect.gameObject.SetActive(true);
                     PostionLightEfffect.localPosition = new Vector3(TargetBlock.transform.localPosition.x, PostionLightEfffect.localPosition.y, TargetBlock.transform.localPosition.z);
                     if (TargetBlock.transform.childCount > 0)
@@ -353,7 +355,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     void SetAllDefaut()
     {
         if (TargetBlock == null) return;
-        Transform PostionLightEfffect = Data.gameManager.CurrenGridLevel.EffectSelectBlock.transform;
+        Transform PostionLightEfffect = Data.gameManager.EffectSelectBlock.transform;
         PostionLightEfffect.gameObject.SetActive(false);
         TargetBlock.GetComponent<BlockControl>().BacktoDFColor();
     }
@@ -432,9 +434,8 @@ public class GamePlayManager : Singleton<GamePlayManager>
            
             TargetBlock.ListChildBlock.Add(selectedBlock.ListChildBlock[i]);
         }
-        ParticleSystem EffectSetBlock = GameManager.Ins.CurrenGridLevel.ParticleEffectSetBlock;
+        ParticleSystem EffectSetBlock = GameManager.Ins.ParticleEffectSetBlock;
         EffectSetBlock.gameObject.SetActive(true);
-        EffectSetBlock.gameObject.transform.SetParent(GameManager.Ins.CurrenGridLevel.transform);
         EffectSetBlock.gameObject.transform.localPosition = TargetBlock.transform.localPosition + new Vector3(0, 0.1f, 0);
         EffectSetBlock.Clear();
         EffectSetBlock.Play();
@@ -509,7 +510,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
             Col.size = new Vector3(Col.size.x , SizeY , Col.size.z );
             Col.center = new Vector3(Col.center.x, SizeY/3, Col.center.z);
         }
-        Debug.Log(countspawn);
+      
     }
 
     public int CheckScore(BlockControl Count)
@@ -555,28 +556,44 @@ public class GamePlayManager : Singleton<GamePlayManager>
         Animation.Ins.RunUpBlocks(Ani.BlockStart, Ani.BlockEnd);
         AnimationControl.Ins.DeLayCheckScore = null;
     }
-    public void RunBoostersBreackBlock(BlockControl TargetBlock) {
+    public void WaitHammerAnimation(BlockControl TargetBlock)
+    {
+        Animator HammerAnimator = GameManager.Ins.HammerAnimator;
+        HammerAnimator.gameObject.SetActive(true);
+        float x = TargetBlock.transform.localPosition.x + 0.7f;
+        float y = TargetBlock.transform.childCount * sizeYBlock * 50;
+        float z = TargetBlock.transform.localPosition.z;
+        HammerAnimator.transform.localPosition = new Vector3(x, y, z);
+        BlockHit = TargetBlock;
+        HammerAnimator.SetTrigger("Hit");
+        
+    }
+    BlockControl BlockHit = null;
+    public void RunBoostersBreackBlock() {
+        if (BlockHit == null) return;
+
         List<Transform> children = new List<Transform>();
-        foreach (Transform child in TargetBlock.transform)
+        foreach (Transform child in BlockHit.transform)
         {
             children.Add(child);
         }
-
         foreach (Transform child in children)
         {
             LeanPool.Despawn(child);
         }
-        GameManager.Ins.CurrenGridLevel.ParticleEffectHammer.gameObject.SetActive(true);
+        GameManager.Ins.ParticleEffectHammer.gameObject.SetActive(true);
         ParticleSystem effect = Instantiate(EffectDestroyBlock);
-        effect.transform.SetParent(TargetBlock.transform, false);
+        effect.transform.SetParent(BlockHit.transform, false);
         effect.transform.localPosition = new Vector3(0, 0.003f, 0);
         effect.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f);
         var main = effect.main;
-        Color blockColor = TargetBlock.ListChildBlock[TargetBlock.ListChildBlock.Count - 1].MeshRenderer.sharedMaterial.color;
+        Color blockColor = BlockHit.ListChildBlock[BlockHit.ListChildBlock.Count - 1].MeshRenderer.sharedMaterial.color;
         main.startColor = blockColor;
-        UpdateSocre(TargetBlock.ListChildBlock.Count);
-        TargetBlock.ListChildBlock.Clear();
+        UpdateSocre(BlockHit.ListChildBlock.Count);
+        BlockHit.ListChildBlock.Clear();
+        BlockHit = null;
     }
+    
     public void EndBoosters()
     {
 
