@@ -134,7 +134,6 @@ public class GameplayUI : UICanvas
         new Vector3(0, 0, 0),
         1.3f                   // thời gian di chuyển tay
         );
-        Tutorial.Ins.Message("Click Herre");
         GamePlayManager.Ins.TutorialActive = true;
     }
     public void OpenCoinData()

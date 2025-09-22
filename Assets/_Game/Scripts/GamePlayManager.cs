@@ -279,7 +279,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
                     TargetBlock.SetColor(LightMaterial);
                     Transform PostionLightEfffect = Data.gameManager.EffectSelectBlock.transform;
                     PostionLightEfffect.gameObject.SetActive(true);
-                    PostionLightEfffect.localPosition = new Vector3(TargetBlock.transform.localPosition.x, PostionLightEfffect.localPosition.y, TargetBlock.transform.localPosition.z);
+                    PostionLightEfffect.position = new Vector3(TargetBlock.transform.position.x, PostionLightEfffect.position.y, TargetBlock.transform.position.z);
                     if (TargetBlock.transform.childCount > 0)
                     {
                         PostionLightEfffect.gameObject.SetActive(false);
@@ -436,7 +436,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         }
         ParticleSystem EffectSetBlock = GameManager.Ins.ParticleEffectSetBlock;
         EffectSetBlock.gameObject.SetActive(true);
-        EffectSetBlock.gameObject.transform.localPosition = TargetBlock.transform.localPosition + new Vector3(0, 0.1f, 0);
+        EffectSetBlock.gameObject.transform.position = TargetBlock.transform.position + new Vector3(0, 0.1f, 0);
         EffectSetBlock.Clear();
         EffectSetBlock.Play();
         if (Data.animationControl.ScorePlus || Data.animationControl.IsRun)

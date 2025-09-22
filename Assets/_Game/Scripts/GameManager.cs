@@ -126,7 +126,6 @@ public class GameManager : Singleton<GameManager>
         TextLevelTransition.text = "Back Home";
         CurrenLevelGameObject = new GameObject();
         StartCoroutine(DelayOpenHomeUI());
-      
     }
     private IEnumerator DelayOpenHomeUI()
     {
