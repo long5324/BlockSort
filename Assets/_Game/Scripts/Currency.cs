@@ -104,7 +104,18 @@ public class Currency : Singleton<Currency>
         DataCurrency.coin += value;
         SaveData();
     }
-
+    public void DeleteBooters()
+    {
+        for (int i = 0; i < DataItem.BootersData.Count; i++)
+        {
+                var info = DataItem.BootersData[i];
+                info.NumberBooters =0;
+                DataItem.BootersData[i] = info;
+              
+            
+        }
+        SaveData();
+    }
     public void AddGem(int value)
     {
         DataCurrency.gem += value;

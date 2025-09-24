@@ -118,7 +118,6 @@ namespace HumanSort
 
             // Convert the screen position to world position
             Vector3 worldPosition = Camera.main.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, Camera.main.nearClipPlane));
-
             return worldPosition;
         }
 

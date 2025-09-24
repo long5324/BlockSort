@@ -14,6 +14,10 @@ public class DragRotate : MonoBehaviour
 
     void Update()
     {
+        if (GamePlayManager.Ins.selectedBlock != null)
+        {
+            return;
+        }
         if (Input.GetMouseButtonDown(0))
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);

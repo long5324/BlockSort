@@ -51,6 +51,7 @@ public class GameManager : Singleton<GameManager>
     }
     public void SetUpLevel(int Number )
     {
+        UIManager.Ins.GetUI<HomeUI>().Close(1);
         AnimationTransition.SetTrigger("Close");
         TextLevelTransition.text = "Level " + Number.ToString();
         StartCoroutine(StartInit(Number));
@@ -247,12 +248,11 @@ public class GameManager : Singleton<GameManager>
     }
     public bool CheckEndGame()
     {
-        Debug.Log("Check End");
         List<BlockControl> ListBlockControl = GamePlayManager.Ins.BottomBlock;
         if (ListBlockControl == null) return false;
         foreach (var i in ListBlockControl)
         {
-             if(i.ListChildBlock.Count == 0 && i.State == StateBlock.Nomal)
+            if ((i.ListChildBlock.Count == 0 && i.State == StateBlock.Nomal) || AnimationControl.Ins.IsRun || AnimationControl.Ins.ScorePlus )
             {
                 return false;
             }

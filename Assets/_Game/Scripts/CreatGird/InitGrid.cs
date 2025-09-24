@@ -95,7 +95,7 @@ public class InitGrid : MonoBehaviour
             FitCollider();
   }
 
-    public void FitCollider(float scale = 1.3f)
+    public void FitCollider(float scale = 1.5f)
     {
         // Lấy hoặc thêm BoxCollider cho parent
         BoxCollider box = GetComponent<BoxCollider>();

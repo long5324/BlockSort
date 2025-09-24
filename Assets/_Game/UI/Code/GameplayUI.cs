@@ -1,4 +1,5 @@
-﻿using DG.Tweening;
+﻿using AssetKits.ParticleImage;
+using DG.Tweening;
 using HumanSort;
 using System.Collections;
 using System.Collections.Generic;
@@ -128,14 +129,30 @@ public class GameplayUI : UICanvas
     public void ActionAffterIntrol()
     {
         if (GameManager.Ins.CurrenNumberLevel != 1) return;
-        Tutorial.Ins.WorldDrag(
-        GameManager.Ins.LevelGame.transform.GetChild(1).GetChild(1).position,
-        GameManager.Ins.CurrenGridLevel.ListblockGround[5].transform.position,
-        new Vector3(0, 0, 0),
-        1.3f                   // thời gian di chuyển tay
-        );
-        GamePlayManager.Ins.TutorialActive = true;
+
+        Transform levelGame = GameManager.Ins.LevelGame.transform;
+
+        // Kiểm tra số child trước
+        if (levelGame.childCount > 1 && levelGame.GetChild(1).childCount > 1)
+        {
+            Vector3 startPos = levelGame.GetChild(1).GetChild(1).position;
+            Vector3 endPos = GameManager.Ins.CurrenGridLevel.ListblockGround[5].transform.position;
+
+            Tutorial.Ins.WorldDrag(
+                startPos,
+                endPos,
+                Vector3.zero,
+                1.3f // thời gian di chuyển tay
+            );
+
+            GamePlayManager.Ins.TutorialActive = true;
+        }
+        else
+        {
+            Debug.LogWarning("LevelGame không có đủ child để chạy tutorial!");
+        }
     }
+
     public void OpenCoinData()
     {
         if(CoinDataRec == null) { Debug.Log("Coin Data null"); return; }

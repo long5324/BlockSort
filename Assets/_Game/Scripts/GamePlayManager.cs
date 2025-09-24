@@ -34,7 +34,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     public Block DataBlockChild;
    
     private Camera cam;
-    private ObjectSet selectedBlock = null;
+    public ObjectSet selectedBlock { get; private set; }  = null;
     public BlockControl TargetBlock { get; set; }
     public int CountScaleScore { get; set; } = 0;
     public int CurrenScore { get; set; } = 0;
@@ -97,10 +97,14 @@ public class GamePlayManager : Singleton<GamePlayManager>
         }
         if (selectedBlock==null&&RunBoosters && !AnimationControl.Ins.IsRun && !AnimationControl.Ins.ScorePlus)
         {
-            if(Input.GetMouseButtonDown(0))
-            CheckClickBoosters();
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                CheckClickBoosters();
+            }
         }else if(RunBoosters && selectedBlock!=null && !AnimationControl.Ins.IsRun && !AnimationControl.Ins.ScorePlus)
         {
+
             if (selectedBlock != null && Input.GetMouseButton(0))
             {
                 CheckBottomBlock();
@@ -125,6 +129,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         {
             CheckBottomBlock();
         }
+
         if (Input.GetMouseButtonUp(0))
         {
             SetAllDefaut();
@@ -206,6 +211,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
                 WaitHammerAnimation(TargetBlock);
                 //RunBoostersBreackBlock(TargetBlock);
                 EndBoosters();
+               
                 RunBoosters = false;
             }
             else if(StateBooter == Boosters.ChangeBlock)
@@ -439,6 +445,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         EffectSetBlock.gameObject.transform.position = TargetBlock.transform.position + new Vector3(0, 0.1f, 0);
         EffectSetBlock.Clear();
         EffectSetBlock.Play();
+        AudioControl.Ins.PlaySFX("Set");
         if (Data.animationControl.ScorePlus || Data.animationControl.IsRun)
         {
             DelayCheck.Add(TargetBlock.PosionBlock);
@@ -448,6 +455,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         }
         selectedBlock.ListChildBlock.Clear();
         CheckGamePlay();
+
         GameManager.Ins.EventEndGame();
     }
     public void UpdateSocre(int NumberSocre)
@@ -528,6 +536,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
     
         return countScore;
     }
+
     public void EventSupport(BlockControl BlockStart, BlockControl BlockEnd )
     {
       
@@ -549,11 +558,13 @@ public class GamePlayManager : Singleton<GamePlayManager>
             i.transform.localPosition = Vector3.zero;
             BlockStart.ListChildBlock.Add(i);
         }
+        Debug.Log(BlockStart.PosionBlock + " " + BlockEnd.PosionBlock);
         IfData Ani = new IfData();
         Ani.BlockStart = BlockStart;
         Ani.BlockEnd = BlockEnd;
         AnimationControl.Ins.Ani = Ani;
-        Animation.Ins.RunUpBlocks(Ani.BlockStart, Ani.BlockEnd);
+        AnimationControl.Ins.IsRun = true;
+        Animation.Ins.RunUpBlocks(BlockStart,BlockEnd);
         AnimationControl.Ins.DeLayCheckScore = null;
     }
     public void WaitHammerAnimation(BlockControl TargetBlock)

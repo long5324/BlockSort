@@ -15,7 +15,6 @@ using UnityEngine;
 using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UIElements;
 using static Lean.Pool.LeanGameObjectPool;
-using static Sirenix.OdinInspector.Editor.UnityPropertyEmitter;
 using static UnityEngine.GraphicsBuffer;
 public class Animation : Singleton<Animation>
 {
@@ -34,12 +33,10 @@ public class Animation : Singleton<Animation>
         // Lấy danh sách child block từ block start
         List<Transform> tf = new List<Transform>();
         List<ChildBlock> lbc = start.GetSameBlock();
-
         foreach (var child in lbc)
         {
             tf.Add(child.transform);
         }
-
         //Chạy coroutine UpBlock (không cần chờ)
         StartCoroutine(UpBlock(
             tf,
@@ -133,9 +130,12 @@ public class Animation : Singleton<Animation>
              BlockStart = Data.animationControl.Ani.BlockStart.PosionBlock;
              BlockEnd = Data.animationControl.Ani.BlockEnd.PosionBlock;
         }
+        //Debug.Log(Data.animationControl.Ani.BlockStart.PosionBlock + " " + Data.animationControl.Ani.BlockEnd.PosionBlock);
         Data.animationControl.IsRun = false;
         Data.animationControl.ChangeInDataBlockControl(BlockStart);
+       
         Data.animationControl.ChangeInDataBlockControl(BlockEnd);
+        AnimationControl.Ins.Ani = new IfData();
         AddCheck(BlockStart);
         AddCheck(BlockEnd);
         GameManager.Ins.EventEndGame();
@@ -181,24 +181,16 @@ public class Animation : Singleton<Animation>
         }
 
         yield return RemoveChildren(block, children, effect);
-
-    
-
-        // ✅ Nếu nhiều lần gọi → chỉ chạy khi score cao nhất
-        // ✅ Nếu chỉ có 1 lần gọi → chạy luôn
         if (!handled && ((totalCalls == 1) || (score == MaxScoreSeen)))
         {
             handled = true;
             HandleContinue(maxBlock);
         }
-
         DestroyEffect(effect);
         FinalizeScore(block, children);
         HandleLockBlocks(block);
         GameManager.Ins.EventEndGame();
     }
-
-
     private List<Transform> GetChildrenToRemove(BlockControl block, int score)
     {
         List<Transform> children = new List<Transform>();
@@ -269,16 +261,17 @@ public class Animation : Singleton<Animation>
         AddCheck(block.PosionBlock);
     }
 
-    private void HandleContinue( BlockControl bc)
+    private void HandleContinue( BlockControl bc )
     {
+       
             handled = false;
-        MaxScoreSeen = 0;
+            MaxScoreSeen = 0;
             Data.animationControl.ScorePlus = false;
             BlockControl bcc = GetSupportBlock(bc);
             if (bcc != null && bcc.State == StateBlock.Support)
             {
+                
                 Data.animationControl.IsRun = true;
-                Data.animationControl.Ani = null;
                 Stretch(bcc);
             }
     }
@@ -329,10 +322,8 @@ public class Animation : Singleton<Animation>
         BlockControl Bc = ChooseRandomBlock();
         GamePlayManager.Ins.EventSupport(targetTransform, Bc);
         bc = null;
-
         Vector3 targetScale = new Vector3(43f, 43f, 43f);
         Vector3 stretchScale = targetScale * 1.2f; // phình ra 20% so với (43,43,43)
-
         DG.Tweening.Sequence seq = DOTween.Sequence();
         seq.Append(targetTransform.transform
             .DOScale(stretchScale, 0.1f)
@@ -340,12 +331,8 @@ public class Animation : Singleton<Animation>
         seq.Append(targetTransform.transform
             .DOScale(targetScale, 0.15f)
             .SetEase(Ease.OutBounce)); // quay về (43,43,43)
-
         return seq;
     }
-
-
-
     public void SetUpNewPositon()
     {
         foreach (var block in GamePlayManager.Ins.BottomBlock)
@@ -358,7 +345,6 @@ public class Animation : Singleton<Animation>
             {
                 oldPositions.Add(child.localPosition);
                 children.Add(child);
-
                 child.localPosition = new Vector3(0, 0.1f, 0);
                 child.gameObject.SetActive(true);
             }
@@ -413,9 +399,6 @@ public class Animation : Singleton<Animation>
         // Báo cho block này đã xong
         onComplete?.Invoke();
     }
-
-
-
     public BlockControl ChooseRandomBlock()
     {
         List<BlockControl> allBlock = GamePlayManager.Ins.BottomBlock;
@@ -423,7 +406,7 @@ public class Animation : Singleton<Animation>
 
         foreach (var block in allBlock)
         {
-            if (block.ListChildBlock.Count > 0)
+            if (block.ListChildBlock.Count > 0 && block.State == StateBlock.Nomal && block.ListChildBlock[block.ListChildBlock.Count-1].CurrenColor != BlockColor.None)
             {
                 listBlockRandom.Add(block);
             }
@@ -460,7 +443,6 @@ public class Animation : Singleton<Animation>
     public void AnimationVictoryGameLevel()
     {
         Transform target = GameManager.Ins.LevelGame.transform.GetChild(0);
-
         DG.Tweening.Sequence seq = DOTween.Sequence();
         seq.Join(target.DORotate(new Vector3(0, 180f, 0), 3f, RotateMode.FastBeyond360).SetEase(Ease.Linear));
         seq.Join(target.DOScale(Vector3.zero, 3f).SetEase(Ease.Linear));

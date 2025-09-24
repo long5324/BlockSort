@@ -154,12 +154,11 @@ public class AnimationControl : Singleton<AnimationControl>
     {
         foreach (var i in gamePlayManager.BottomBlock)
         {
-            // Kiểm tra i có bị destroy không
             if (i == null) continue;
 
             if (i.PosionBlock == Po)
             {
-                i.ListChildBlock = new List<ChildBlock>();
+                i.ListChildBlock.Clear();
 
                 foreach (Transform k in i.transform)
                 {
@@ -172,7 +171,8 @@ public class AnimationControl : Singleton<AnimationControl>
             }
         }
 
-        Ani = new IfData();
+            Debug.Log(1);
+       // Ani = new IfData();
     }
 
 

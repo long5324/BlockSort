@@ -10,6 +10,7 @@ public class HammerAnimationEvent : MonoBehaviour
     public void StartEvent()
     {
         EventHitHammer.Invoke();
+        AudioControl.Ins.PlaySFX("HammerEffectSound");
     }
     public void EndAnimation()
     {
