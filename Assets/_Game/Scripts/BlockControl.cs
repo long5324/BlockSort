@@ -43,12 +43,24 @@ public class BlockControl : MonoBehaviour
     }
     public void DeleteAllLockCount()
     {
+        // Nếu object này đã bị destroy thì return luôn
+        if (this == null || transform == null) return;
+
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
-            GameObject child = transform.GetChild(i).gameObject;
-           DestroyImmediate(child);
+            var child = transform.GetChild(i);
+            if (child != null)
+            {
+#if UNITY_EDITOR
+                DestroyImmediate(child.gameObject);
+#else
+            Destroy(child.gameObject);
+#endif
+            }
         }
     }
+
+
     public void DeleteLockCount()
     {
         if (GameObjectMod == null) return;

@@ -13,6 +13,7 @@ public class VictoryUI : UICanvas
     [SerializeField] Button RePlayButton;
     [SerializeField] Button NextLevelButton;
     [SerializeField] Button HomeButton;
+    [SerializeField] Button BX2Reward;
     [SerializeField] DOTweenAnimation VitoryPanel;
     [SerializeField]
     TextMeshProUGUI NumberCoin;
@@ -20,11 +21,13 @@ public class VictoryUI : UICanvas
     [SerializeField] List<ParticleSystem> EffectVitory;
     [SerializeField] List<GameObject> GameObjectWin;
     [SerializeField] ParticleImage CoinMoveEffect;
+    bool X2 = false;
     private void Start()
     {
         RePlayButton.onClick.AddListener(Replay);
         NextLevelButton.onClick.AddListener(NextLevel);
         HomeButton.onClick.AddListener(GoBackHome);
+        BX2Reward.onClick.AddListener(X2Reward);
     }
     IEnumerator DelayClick(Button btn)
     {
@@ -44,12 +47,19 @@ public class VictoryUI : UICanvas
     }
     public override void Close(float delayTime)
     {
-
+        BX2Reward.interactable = true;
         base.Close(delayTime);
     }
     public void SetNumberReward()
     {
         NumberCoin.text = GameManager.Ins.GameLevelDataBase.ListGameLevel[GameManager.Ins.CurrenNumberLevel - 1].LevelRewards.NumberItem.ToString();
+    }
+    public void X2Reward()
+    {
+        int lastcoin = Currency.Ins.DataCurrency.coin;
+        CurrenCoinText.text = lastcoin.ToString();
+        CoinMoveEffect.Play();
+        BX2Reward.interactable = false;
     }
     public void PlayEffect()
     {
@@ -70,6 +80,7 @@ public class VictoryUI : UICanvas
     }
     public void EffectPlusCoin()
     {
+        Debug.Log("pKusst");
         int lastcoin = Currency.Ins.DataCurrency.coin;
         Currency.Ins.AddCoin(GameManager.Ins.GameLevelDataBase.ListGameLevel[GameManager.Ins.CurrenNumberLevel - 1].LevelRewards.NumberItem);
         int CurrenCoin = Currency.Ins.DataCurrency.coin;

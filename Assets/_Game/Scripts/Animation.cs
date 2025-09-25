@@ -138,7 +138,7 @@ public class Animation : Singleton<Animation>
         AnimationControl.Ins.Ani = new IfData();
         AddCheck(BlockStart);
         AddCheck(BlockEnd);
-        GameManager.Ins.EventEndGame();
+       StartCoroutine(GameManager.Ins.EventEndGame());
     }
 
     void AddCheck (Vector3 BlockList)
@@ -189,7 +189,7 @@ public class Animation : Singleton<Animation>
         DestroyEffect(effect);
         FinalizeScore(block, children);
         HandleLockBlocks(block);
-        GameManager.Ins.EventEndGame();
+        StartCoroutine(GameManager.Ins.EventEndGame());
     }
     private List<Transform> GetChildrenToRemove(BlockControl block, int score)
     {

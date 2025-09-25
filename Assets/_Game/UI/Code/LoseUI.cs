@@ -34,12 +34,15 @@ public class LoseUI : UICanvas
     {
         base.Close(delayTime);
     }
-
+    public void BackHome()
+    {
+        Close(1f);
+        GameManager.Ins.BackToHome();
+    }
     void GoBackHome()
     {
         GameManager.Ins.BackToHome();
-        Close(0f);
-        UIManager.Ins.GetUI<HomeUI>().Open();
+        Close(1f);
         GamePlayManager.Ins.SetPause(false);
     }
     public void SetUpDataLoseGame() {

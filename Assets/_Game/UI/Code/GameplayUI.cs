@@ -391,11 +391,6 @@ public class GameplayUI : UICanvas
             return;
         }
         UpdateBooters();
-        /* if (!CheckCoin(500, PriceRoolBooters))
-         {
-             ShakeUI(0f, ReRollButton.GetComponent<RectTransform>());
-             return;
-         }*/
         GameManager.Ins.Reroll();
         UpdateColorPriceBooters();
         ReRollButton.enabled = false;

@@ -85,6 +85,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         }
       
     }
+    bool CheckClickLockBlock = false;
     private void Update()
     {
         if (TutorialActive)
@@ -124,6 +125,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         {
             TargetBlockPlay();
             CheckUnLockBlock();
+
         }
         if (selectedBlock != null && Input.GetMouseButton(0))
         {
@@ -132,8 +134,10 @@ public class GamePlayManager : Singleton<GamePlayManager>
 
         if (Input.GetMouseButtonUp(0))
         {
+            if(CheckClickLockBlock) 
+                CheckUnLockBlock();
             SetAllDefaut();
-            EndClicK();
+            EndClicK(); 
         }
         if(!Data.animationControl.IsRun && !Data.animationControl.ScorePlus && Data.animationControl.Ani.BlockStart ==null && DelayCheck.Count >0)
         {
@@ -298,12 +302,18 @@ public class GamePlayManager : Singleton<GamePlayManager>
     BlockControl targetUnlock;
     private void CheckUnLockBlock()
     {
+       
         if (ListBlockLock.Count == 0) return;
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit, 100f, LayerMask.GetMask("Lock")))
         {
+            if (!CheckClickLockBlock)
+            {
+                CheckClickLockBlock = true  ;
+                return;
+            }
             targetUnlock = null;
             foreach (var i in ListBlockLock)
             {
@@ -319,6 +329,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
                 UIManager.Ins.GetUI<PopupUIunlock>().Open();
             }
         }
+        CheckClickLockBlock = false;
     }
     public void ShakeObject(Transform TF)
     {
@@ -456,7 +467,7 @@ public class GamePlayManager : Singleton<GamePlayManager>
         selectedBlock.ListChildBlock.Clear();
         CheckGamePlay();
 
-        GameManager.Ins.EventEndGame();
+        StartCoroutine(GameManager.Ins.EventEndGame());
     }
     public void UpdateSocre(int NumberSocre)
     {

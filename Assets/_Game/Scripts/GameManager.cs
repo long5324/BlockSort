@@ -249,10 +249,11 @@ public class GameManager : Singleton<GameManager>
     public bool CheckEndGame()
     {
         List<BlockControl> ListBlockControl = GamePlayManager.Ins.BottomBlock;
-        if (ListBlockControl == null) return false;
+        if (ListBlockControl == null || AnimationControl.Ins.IsRun || AnimationControl.Ins.ScorePlus || GamePlayManager.Ins.DelayCheck.Count > 0) return false;
+        Debug.Log(GamePlayManager.Ins.DelayCheck.Count);
         foreach (var i in ListBlockControl)
         {
-            if ((i.ListChildBlock.Count == 0 && i.State == StateBlock.Nomal) || AnimationControl.Ins.IsRun || AnimationControl.Ins.ScorePlus )
+            if ((i.ListChildBlock.Count == 0 && i.State == StateBlock.Nomal) )
             {
                 return false;
             }
@@ -260,12 +261,15 @@ public class GameManager : Singleton<GameManager>
         return true;
     }
     
-    public void EventEndGame()
+    public IEnumerator EventEndGame()
     {
-        if (!CheckEndGame()) return;
-        UIManager.Ins.GetUI<LoseUI>().Open();
-        UIManager.Ins.GetUI<GameplayUI>().Close(2f);
-        DestroyLever();
+        yield return new WaitForSeconds(0.5f);
+        if (CheckEndGame())
+        {
+            UIManager.Ins.GetUI<LoseUI>().Open();
+            UIManager.Ins.GetUI<GameplayUI>().Close(2f);
+            DestroyLever();
+        }
     }
     public void Winlevel()
     {
